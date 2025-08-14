@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
-
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -24,6 +23,14 @@ public class MainActivity extends AppCompatActivity {
                     new ListaZadatakaFragment()).commit();
         }
 
+        // Deo za Floating Action Button
+        FloatingActionButton fab = findViewById(R.id.fab_dodaj_zadatak);
+        fab.setOnClickListener(view -> {
+            // Pokrećemo KreirajZadatakActivity bez ikakvih dodatnih podataka,
+            // što znači da je u pitanju "Create Mode" (režim kreiranja)
+            Intent intent = new Intent(MainActivity.this, KreirajZadatakActivity.class);
+            startActivity(intent);
+        });
     }
 
     private final BottomNavigationView.OnItemSelectedListener navListener =

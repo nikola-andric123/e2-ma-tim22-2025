@@ -22,6 +22,11 @@ public class ZadatakAdapter extends RecyclerView.Adapter<ZadatakAdapter.ZadatakV
     public interface OnItemClickListener {
         void onItemClick(Zadatak zadatak);
     }
+    public void updateZadaci(List<Zadatak> noviZadaci) {
+        this.zadaci.clear();
+        this.zadaci.addAll(noviZadaci);
+        notifyDataSetChanged(); // Javi RecyclerView-u da se podaci promenili
+    }
     // NOVO: Metoda za postavljanje listenera
     public void setOnItemClickListener(OnItemClickListener listener) {
         this.listener = listener;

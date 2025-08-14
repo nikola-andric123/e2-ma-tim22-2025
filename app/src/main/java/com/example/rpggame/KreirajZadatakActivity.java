@@ -1,9 +1,9 @@
-// Nalazi se u: app/java/com/example/rpgame/KreirajZadatakActivity.java
-
 package com.example.rpggame;
 
+import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -25,27 +25,26 @@ import java.util.UUID;
 
 public class KreirajZadatakActivity extends AppCompatActivity {
 
-    // Deklaracija svih elemenata sa ekrana
     private EditText editTextNazivZadatka, editTextOpisZadatka, editTextInterval;
     private Spinner spinnerKategorija, spinnerTezina, spinnerBitnost, spinnerJedinicaPonavljanja;
     private Button buttonVreme, buttonDatumPocetka, buttonDatumZavrsetka, buttonKreirajZadatak;
     private Switch switchPonavljajuci;
     private LinearLayout layoutPonavljajuciDetalji;
 
-    // Calendar objekti za čuvanje odabranih datuma i vremena
     private Calendar odabranoVreme = Calendar.getInstance();
     private Calendar odabranDatumPocetka = Calendar.getInstance();
     private Calendar odabranDatumZavrsetka = Calendar.getInstance();
-
-    // Lista za privremene kategorije
     private List<Kategorija> listaKategorija = new ArrayList<>();
+
+    private boolean isEditMode = false;
+    private Zadatak zadatakZaIzmenu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_kreiraj_zadatak);
 
-        // Povezivanje elemenata sa njihovim ID-jevima iz XML-a
+        // Povezivanje elemenata sa layout-om
         editTextNazivZadatka = findViewById(R.id.editTextNazivZadatka);
         editTextOpisZadatka = findViewById(R.id.editTextOpisZadatka);
         spinnerKategorija = findViewById(R.id.spinnerKategorija);
@@ -60,33 +59,35 @@ public class KreirajZadatakActivity extends AppCompatActivity {
         buttonDatumZavrsetka = findViewById(R.id.buttonDatumZavrsetka);
         buttonKreirajZadatak = findViewById(R.id.buttonKreirajZadatak);
 
-        // Kreiramo privremene podatke za kategorije
         kreirajPrivremeneKategorije();
-
-        // Popunjavamo sve padajuće liste (Spinners)
         popuniSpinnere();
 
-        // Listener za switch koji prikazuje/sakriva detalje za ponavljajuće zadatke
+        // Provera da li je aktivnost pokrenuta u "Edit Mode"
+        if (getIntent().hasExtra("ZADATAK_ZA_IZMENU")) {
+            isEditMode = true;
+            zadatakZaIzmenu = getIntent().getParcelableExtra("ZADATAK_ZA_IZMENU", Zadatak.class);
+            setTitle("Izmena zadatka"); // Promeni naslov ekrana
+            popuniPoljaZaIzmenu();
+            buttonKreirajZadatak.setText("Sačuvaj izmene"); // Promeni tekst na dugmetu
+        } else {
+            setTitle("Kreiranje novog zadatka");
+            updateLabel(buttonDatumPocetka, odabranDatumPocetka);
+            updateLabel(buttonDatumZavrsetka, odabranDatumZavrsetka);
+        }
+
         switchPonavljajuci.setOnCheckedChangeListener((buttonView, isChecked) -> {
             layoutPonavljajuciDetalji.setVisibility(isChecked ? View.VISIBLE : View.GONE);
         });
 
-        // Postavljamo listenere za dugmad za vreme i datum
         buttonVreme.setOnClickListener(v -> prikaziTimePicker());
         buttonDatumPocetka.setOnClickListener(v -> prikaziDatePicker(buttonDatumPocetka, odabranDatumPocetka));
         buttonDatumZavrsetka.setOnClickListener(v -> prikaziDatePicker(buttonDatumZavrsetka, odabranDatumZavrsetka));
 
-        // Listener za glavno dugme za kreiranje zadatka
-        buttonKreirajZadatak.setOnClickListener(v -> kreirajZadatak());
-
-        // Postavljamo početni tekst na dugmićima za datum
-        updateLabel(buttonDatumPocetka, odabranDatumPocetka);
-        updateLabel(buttonDatumZavrsetka, odabranDatumZavrsetka);
+        buttonKreirajZadatak.setOnClickListener(v -> sacuvajIliKreirajZadatak());
     }
 
-    // Metoda koja simulira učitavanje kategorija iz baze
     private void kreirajPrivremeneKategorije() {
-        // Ovo su probni podaci. Kasnije će ovo dolaziti iz baze koju puni Student 1.
+        if (!listaKategorija.isEmpty()) return;
         listaKategorija.add(new Kategorija("1", "Zdravlje", "#FF5733"));
         listaKategorija.add(new Kategorija("2", "Učenje", "#337BFF"));
         listaKategorija.add(new Kategorija("3", "Zabava", "#33FF57"));
@@ -94,45 +95,103 @@ public class KreirajZadatakActivity extends AppCompatActivity {
     }
 
     private void popuniSpinnere() {
-        // Popunjavanje spinnera za Težinu
-        ArrayAdapter<Zadatak.Tezina> tezinaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, Zadatak.Tezina.values());
-        tezinaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerTezina.setAdapter(tezinaAdapter);
-
-        // Popunjavanje spinnera za Bitnost
-        ArrayAdapter<Zadatak.Bitnost> bitnostAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, Zadatak.Bitnost.values());
-        bitnostAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerBitnost.setAdapter(bitnostAdapter);
-
-        // Popunjavanje spinnera za jedinicu ponavljanja
-        ArrayAdapter<Zadatak.TipPonavljanja> jedinicaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, Zadatak.TipPonavljanja.values());
-        jedinicaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerJedinicaPonavljanja.setAdapter(jedinicaAdapter);
-
-        // Popunjavanje spinnera za kategorije koristeći privremenu listu
         ArrayAdapter<Kategorija> kategorijaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, listaKategorija);
         kategorijaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerKategorija.setAdapter(kategorijaAdapter);
+        ArrayAdapter<Zadatak.Tezina> tezinaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, Zadatak.Tezina.values());
+        tezinaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerTezina.setAdapter(tezinaAdapter);
+        ArrayAdapter<Zadatak.Bitnost> bitnostAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, Zadatak.Bitnost.values());
+        bitnostAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerBitnost.setAdapter(bitnostAdapter);
+        ArrayAdapter<Zadatak.TipPonavljanja> jedinicaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, Zadatak.TipPonavljanja.values());
+        jedinicaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerJedinicaPonavljanja.setAdapter(jedinicaAdapter);
     }
 
-    // Metoda za prikaz dijaloga za odabir vremena
+    private void popuniPoljaZaIzmenu() {
+        if (zadatakZaIzmenu == null) return;
+
+        editTextNazivZadatka.setText(zadatakZaIzmenu.getNaziv());
+        editTextOpisZadatka.setText(zadatakZaIzmenu.getOpis());
+
+        for (int i = 0; i < listaKategorija.size(); i++) {
+            if (listaKategorija.get(i).getId().equals(zadatakZaIzmenu.getKategorijaId())) {
+                spinnerKategorija.setSelection(i);
+                break;
+            }
+        }
+        spinnerTezina.setSelection(zadatakZaIzmenu.getTezina().ordinal());
+        spinnerBitnost.setSelection(zadatakZaIzmenu.getBitnost().ordinal());
+
+        odabranDatumPocetka.setTimeInMillis(zadatakZaIzmenu.getDatumPocetka());
+        updateLabel(buttonVreme, odabranDatumPocetka);
+        updateLabel(buttonDatumPocetka, odabranDatumPocetka);
+
+        if (zadatakZaIzmenu.isPonavljajuci()) {
+            switchPonavljajuci.setChecked(true);
+            editTextInterval.setText(String.valueOf(zadatakZaIzmenu.getIntervalPonavljanja()));
+            spinnerJedinicaPonavljanja.setSelection(zadatakZaIzmenu.getTipPonavljanja().ordinal());
+            odabranDatumZavrsetka.setTimeInMillis(zadatakZaIzmenu.getDatumZavrsetka());
+            updateLabel(buttonDatumZavrsetka, odabranDatumZavrsetka);
+        }
+    }
+
+    private void sacuvajIliKreirajZadatak() {
+        String naziv = editTextNazivZadatka.getText().toString().trim();
+        if (naziv.isEmpty()) {
+            editTextNazivZadatka.setError("Naziv zadatka je obavezan!");
+            return;
+        }
+
+        String opis = editTextOpisZadatka.getText().toString().trim();
+        Kategorija odabranaKategorija = (Kategorija) spinnerKategorija.getSelectedItem();
+        Zadatak.Tezina tezina = (Zadatak.Tezina) spinnerTezina.getSelectedItem();
+        Zadatak.Bitnost bitnost = (Zadatak.Bitnost) spinnerBitnost.getSelectedItem();
+        boolean isPonavljajuci = switchPonavljajuci.isChecked();
+        int interval = 0;
+        Zadatak.TipPonavljanja tipPonavljanja = null;
+
+        if (isPonavljajuci) {
+            try {
+                interval = Integer.parseInt(editTextInterval.getText().toString());
+            } catch (NumberFormatException e) {
+                editTextInterval.setError("Unesite validan broj za interval!");
+                return;
+            }
+            tipPonavljanja = (Zadatak.TipPonavljanja) spinnerJedinicaPonavljanja.getSelectedItem();
+        }
+
+        String id = isEditMode ? zadatakZaIzmenu.getId() : UUID.randomUUID().toString();
+
+        Zadatak zadatak = new Zadatak(id, naziv, opis, odabranaKategorija.getId(), isPonavljajuci, interval, tipPonavljanja, odabranDatumPocetka.getTimeInMillis(), odabranDatumZavrsetka.getTimeInMillis(), tezina, bitnost);
+        if (isEditMode) {
+            zadatak.setStatus(zadatakZaIzmenu.getStatus()); // Sačuvaj postojeći status
+        }
+
+        if (isEditMode) {
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra("AZURIRAN_ZADATAK", zadatak);
+            setResult(Activity.RESULT_OK, resultIntent);
+            Toast.makeText(this, "Izmene sačuvane!", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Zadatak kreiran!", Toast.LENGTH_SHORT).show();
+            // TODO: Kasnije upis u bazu
+        }
+        finish();
+    }
+
     private void prikaziTimePicker() {
         TimePickerDialog.OnTimeSetListener timeSetListener = (view, hourOfDay, minute) -> {
-            odabranoVreme.set(Calendar.HOUR_OF_DAY, hourOfDay);
-            odabranoVreme.set(Calendar.MINUTE, minute);
-            // Postavi isto vreme i na kalendare za datum početka i završetka
             odabranDatumPocetka.set(Calendar.HOUR_OF_DAY, hourOfDay);
             odabranDatumPocetka.set(Calendar.MINUTE, minute);
             odabranDatumZavrsetka.set(Calendar.HOUR_OF_DAY, hourOfDay);
             odabranDatumZavrsetka.set(Calendar.MINUTE, minute);
-
-            updateLabel(buttonVreme, odabranoVreme);
+            updateLabel(buttonVreme, odabranDatumPocetka);
         };
-
-        new TimePickerDialog(this, timeSetListener, odabranoVreme.get(Calendar.HOUR_OF_DAY), odabranoVreme.get(Calendar.MINUTE), true).show();
+        new TimePickerDialog(this, timeSetListener, odabranDatumPocetka.get(Calendar.HOUR_OF_DAY), odabranDatumPocetka.get(Calendar.MINUTE), true).show();
     }
 
-    // Metoda za prikaz dijaloga za odabir datuma
     private void prikaziDatePicker(Button buttonToUpdate, Calendar calendarToSet) {
         DatePickerDialog.OnDateSetListener dateSetListener = (view, year, month, dayOfMonth) -> {
             calendarToSet.set(Calendar.YEAR, year);
@@ -140,11 +199,9 @@ public class KreirajZadatakActivity extends AppCompatActivity {
             calendarToSet.set(Calendar.DAY_OF_MONTH, dayOfMonth);
             updateLabel(buttonToUpdate, calendarToSet);
         };
-
         new DatePickerDialog(this, dateSetListener, calendarToSet.get(Calendar.YEAR), calendarToSet.get(Calendar.MONTH), calendarToSet.get(Calendar.DAY_OF_MONTH)).show();
     }
 
-    // Pomoćna metoda za ažuriranje teksta na dugmetu (za vreme ili datum)
     private void updateLabel(Button button, Calendar calendar) {
         String format;
         String prefix = "";
@@ -156,60 +213,5 @@ public class KreirajZadatakActivity extends AppCompatActivity {
         }
         SimpleDateFormat sdf = new SimpleDateFormat(format, Locale.getDefault());
         button.setText(prefix + sdf.format(calendar.getTime()));
-    }
-
-    // Glavna metoda koja se poziva na klik dugmeta "Kreiraj zadatak"
-    private void kreirajZadatak() {
-        // Čitanje vrednosti sa forme
-        String naziv = editTextNazivZadatka.getText().toString().trim();
-        if (naziv.isEmpty()) {
-            editTextNazivZadatka.setError("Naziv zadatka je obavezan!");
-            return;
-        }
-
-        String opis = editTextOpisZadatka.getText().toString().trim();
-        Zadatak.Tezina tezina = (Zadatak.Tezina) spinnerTezina.getSelectedItem();
-        Zadatak.Bitnost bitnost = (Zadatak.Bitnost) spinnerBitnost.getSelectedItem();
-        boolean isPonavljajuci = switchPonavljajuci.isChecked();
-
-        Kategorija odabranaKategorija = (Kategorija) spinnerKategorija.getSelectedItem();
-        if (odabranaKategorija == null) {
-            Toast.makeText(this, "Greška: Nije odabrana kategorija.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        String kategorijaId = odabranaKategorija.getId();
-
-        int interval = 0;
-        Zadatak.TipPonavljanja tipPonavljanja = null;
-        if (isPonavljajuci) {
-            try {
-                interval = Integer.parseInt(editTextInterval.getText().toString());
-            } catch (NumberFormatException e) {
-                editTextInterval.setError("Unesite validan broj za interval!");
-                return;
-            }
-            tipPonavljanja = (Zadatak.TipPonavljanja) spinnerJedinicaPonavljanja.getSelectedItem();
-        }
-
-        // Kreiranje finalnog objekta 'Zadatak'
-        Zadatak noviZadatak = new Zadatak(
-                UUID.randomUUID().toString(),
-                naziv,
-                opis,
-                kategorijaId,
-                isPonavljajuci,
-                interval,
-                tipPonavljanja,
-                odabranDatumPocetka.getTimeInMillis(),
-                odabranDatumZavrsetka.getTimeInMillis(),
-                tezina,
-                bitnost
-        );
-
-        // TODO: Sačuvati 'noviZadatak' u bazu podataka (SQLite/Firebase)
-
-        // Prikaz poruke korisniku i zatvaranje ekrana
-        Toast.makeText(this, "Zadatak '" + noviZadatak.getNaziv() + "' je kreiran!", Toast.LENGTH_LONG).show();
-        finish();
     }
 }
