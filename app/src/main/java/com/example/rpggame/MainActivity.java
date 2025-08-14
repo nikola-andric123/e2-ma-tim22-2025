@@ -2,8 +2,11 @@ package com.example.rpggame;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -12,11 +15,36 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Button dugmeDodaj = findViewById(R.id.dugmeDodajZadatak);
-        dugmeDodaj.setOnClickListener(v -> {
-            // Kreiramo "Intent" (nameru) da pokrenemo KreirajZadatakActivity
-            Intent intent = new Intent(MainActivity.this, KreirajZadatakActivity.class);
-            startActivity(intent);
-        });
+        BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+        bottomNav.setOnItemSelectedListener(navListener);
+
+        // Postavi početni fragment
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                    new ListaZadatakaFragment()).commit();
+        }
+
     }
+
+    private final BottomNavigationView.OnItemSelectedListener navListener =
+            item -> {
+                Fragment selectedFragment = null;
+
+                int itemId = item.getItemId();
+                if (itemId == R.id.nav_lista) {
+                    selectedFragment = new ListaZadatakaFragment();
+                } else if (itemId == R.id.nav_kalendar) {
+                    selectedFragment = new KalendarFragment();
+                } else if (itemId == R.id.nav_profil) {
+                    // TODO: Kreirati i postaviti ProfilFragment
+                    // selectedFragment = new ProfilFragment();
+                }
+
+                if (selectedFragment != null) {
+                    getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                            selectedFragment).commit();
+                }
+
+                return true;
+            };
 }

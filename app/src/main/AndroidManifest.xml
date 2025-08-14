@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
+        android:name=".MojaAplikacija"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -11,6 +12,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.RPGgame">
+        <activity
+            android:name=".DetaljiZadatkaActivity"
+            android:exported="false" />
+        <activity
+            android:name=".DetaljiZadatakaActivity"
+            android:exported="false" />
         <activity
             android:name=".KreirajZadatakActivity"
             android:exported="false" />

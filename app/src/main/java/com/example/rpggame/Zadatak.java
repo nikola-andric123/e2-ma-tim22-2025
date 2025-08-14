@@ -1,46 +1,34 @@
+// Nalazi se u: app/java/com/example/rpgame/Zadatak.java
 package com.example.rpggame;
 
-public class Zadatak {
+import android.os.Parcel;
+import android.os.Parcelable;
 
-    // Definišemo "enum" tipove da bismo ograničili moguće vrednosti.
-    // Ovo je mnogo bolje nego da koristimo običan tekst ("String") jer smanjuje mogućnost greške.
-    public enum Tezina {
-        VEOMA_LAK, LAK, TEZAK, EKSTREMNO_TEZAK
-    }
+import androidx.annotation.NonNull;
 
-    public enum Bitnost {
-        NORMALAN, VAZAN, EKSTREMNO_VAZAN, SPECIJALAN
-    }
+public class Zadatak implements Parcelable {
 
-    public enum Status {
-        AKTIVAN, URADJEN, NEURADJEN, PAUZIRAN, OTKAZAN
-    }
+    // Enum-i i atributi ostaju potpuno isti...
+    public enum Tezina { VEOMA_LAK, LAK, TEZAK, EKSTREMNO_TEZAK }
+    public enum Bitnost { NORMALAN, VAZAN, EKSTREMNO_VAZAN, SPECIJALAN }
+    public enum Status { AKTIVAN, URADJEN, NEURADJEN, PAUZIRAN, OTKAZAN }
+    public enum TipPonavljanja { DAN, NEDELJA }
 
-    public enum TipPonavljanja {
-        DAN, NEDELJA
-    }
-
-    // Atributi (polja) naše klase Zadatak
     private String id;
     private String naziv;
     private String opis;
-    private String kategorijaId; // Čuvaćemo ID kategorije koju kreira Student 1
-
-    private boolean ponavljajuci; // true ako je ponavljajući, false ako je jednokratni
+    private String kategorijaId;
+    private boolean ponavljajuci;
     private int intervalPonavljanja;
     private TipPonavljanja tipPonavljanja;
-    private long datumPocetka; // Čuvamo datume kao brojeve (timestamp) radi lakšeg rada
+    private long datumPocetka;
     private long datumZavrsetka;
-
     private Tezina tezina;
     private Bitnost bitnost;
     private Status status;
 
-    // Prazan konstruktor je potreban za Firebase
-    public Zadatak() {
-    }
+    public Zadatak() {}
 
-    // Konstruktor koji ćemo koristiti za kreiranje novog zadatka
     public Zadatak(String id, String naziv, String opis, String kategorijaId, boolean ponavljajuci, int intervalPonavljanja, TipPonavljanja tipPonavljanja, long datumPocetka, long datumZavrsetka, Tezina tezina, Bitnost bitnost) {
         this.id = id;
         this.naziv = naziv;
@@ -53,12 +41,10 @@ public class Zadatak {
         this.datumZavrsetka = datumZavrsetka;
         this.tezina = tezina;
         this.bitnost = bitnost;
-        this.status = Status.AKTIVAN; // Svaki novokreirani zadatak je automatski aktivan [cite: 438]
+        this.status = Status.AKTIVAN;
     }
 
-    // Getteri i Setteri - metode za pristup i postavljanje vrednosti atributa
-    // Možete ih generisati automatski: Desni klik -> Generate -> Getter and Setter -> Select All
-
+    // Getteri i Setteri ostaju isti...
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getNaziv() { return naziv; }
@@ -83,4 +69,62 @@ public class Zadatak {
     public void setBitnost(Bitnost bitnost) { this.bitnost = bitnost; }
     public Status getStatus() { return status; }
     public void setStatus(Status status) { this.status = status; }
+
+    // --- ISPRAVLJEN KOD ZA PARCELABLE ---
+    protected Zadatak(Parcel in) {
+        id = in.readString();
+        naziv = in.readString();
+        opis = in.readString();
+        kategorijaId = in.readString();
+        ponavljajuci = in.readByte() != 0;
+        intervalPonavljanja = in.readInt();
+        datumPocetka = in.readLong();
+        datumZavrsetka = in.readLong();
+
+        // ISPRAVKA: Čitanje enum-a na siguran način
+        int tmpTezina = in.readInt();
+        tezina = tmpTezina == -1 ? null : Tezina.values()[tmpTezina];
+        int tmpBitnost = in.readInt();
+        bitnost = tmpBitnost == -1 ? null : Bitnost.values()[tmpBitnost];
+        int tmpStatus = in.readInt();
+        status = tmpStatus == -1 ? null : Status.values()[tmpStatus];
+        int tmpTipPonavljanja = in.readInt();
+        tipPonavljanja = tmpTipPonavljanja == -1 ? null : TipPonavljanja.values()[tmpTipPonavljanja];
+    }
+
+    @Override
+    public void writeToParcel(@NonNull Parcel dest, int flags) {
+        dest.writeString(id);
+        dest.writeString(naziv);
+        dest.writeString(opis);
+        dest.writeString(kategorijaId);
+        dest.writeByte((byte) (ponavljajuci ? 1 : 0));
+        dest.writeInt(intervalPonavljanja);
+        dest.writeLong(datumPocetka);
+        dest.writeLong(datumZavrsetka);
+
+        // ISPRAVKA: Pisanje enum-a na siguran način
+        dest.writeInt(tezina == null ? -1 : tezina.ordinal());
+        dest.writeInt(bitnost == null ? -1 : bitnost.ordinal());
+        dest.writeInt(status == null ? -1 : status.ordinal());
+        dest.writeInt(tipPonavljanja == null ? -1 : tipPonavljanja.ordinal());
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    public static final Creator<Zadatak> CREATOR = new Creator<Zadatak>() {
+        @Override
+        public Zadatak createFromParcel(Parcel in) {
+            return new Zadatak(in);
+        }
+
+        @Override
+        public Zadatak[] newArray(int size) {
+            return new Zadatak[size];
+        }
+    };
+    // --- KRAJ ISPRAVLJENOG KODA ---
 }
