@@ -1,0 +1,49 @@
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="4dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp">
+
+        <View
+            android:id="@+id/viewBojaKategorije"
+            android:layout_width="10dp"
+            android:layout_height="match_parent"
+            android:background="#FF5733" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="16dp">
+
+            <TextView
+                android:id="@+id/textViewNazivZadatka"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Naziv Zadatka"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textViewVremeZadatka"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="14:30" />
+        </LinearLayout>
+
+        <CheckBox
+            android:id="@+id/checkboxUradjeno"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"/>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>
