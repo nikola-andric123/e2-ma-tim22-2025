@@ -20,6 +20,7 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
     private TextView txtNaziv, txtOpis, txtTezina, txtBitnost, txtVreme;
     private Button btnUradjen, btnOtkazan, btnIzmeni;
     private Zadatak trenutniZadatak;
+    private ZadatakRepository zadatakRepository;
     private ActivityResultLauncher<Intent> izmenaLauncher;
 
     @Override
@@ -27,14 +28,16 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detalji_zadatka);
 
-        // Launcher za primanje rezultata iz KreirajZadatakActivity
+        zadatakRepository = new ZadatakRepository(getApplication());
+
         izmenaLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
-                        // Preuzmi ažurirani zadatak i osveži prikaz
                         trenutniZadatak = result.getData().getParcelableExtra("AZURIRAN_ZADATAK", Zadatak.class);
-                        popuniPodatke();
+                        if(trenutniZadatak != null) {
+                            popuniPodatke();
+                        }
                     }
                 });
 
@@ -60,8 +63,7 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
     }
 
     private void popuniPodatke() {
-        if(trenutniZadatak == null) return;
-
+        if (trenutniZadatak == null) return;
         setTitle("Detalji: " + trenutniZadatak.getNaziv());
         txtNaziv.setText(trenutniZadatak.getNaziv());
         txtOpis.setText(trenutniZadatak.getOpis());
@@ -75,12 +77,14 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
     private void postaviListenere() {
         btnUradjen.setOnClickListener(v -> {
             trenutniZadatak.setStatus(Zadatak.Status.URADJEN);
+            zadatakRepository.insert(trenutniZadatak);
             Toast.makeText(this, "Zadatak označen kao URAĐEN!", Toast.LENGTH_SHORT).show();
             vratiRezultatNazad();
         });
 
         btnOtkazan.setOnClickListener(v -> {
             trenutniZadatak.setStatus(Zadatak.Status.OTKAZAN);
+            zadatakRepository.insert(trenutniZadatak);
             Toast.makeText(this, "Zadatak označen kao OTKAZAN!", Toast.LENGTH_SHORT).show();
             vratiRezultatNazad();
         });
@@ -94,14 +98,15 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
 
     private void vratiRezultatNazad() {
         Intent resultIntent = new Intent();
+        // Vraćamo nazad poslednje stanje zadatka, bez obzira da li je promenjen status ili je editovan
         resultIntent.putExtra("AZURIRAN_ZADATAK", trenutniZadatak);
         setResult(Activity.RESULT_OK, resultIntent);
         finish();
     }
 
-    // VAŽNO: Vrati rezultat i kada korisnik pritisne "back" dugme
     @Override
     public void onBackPressed() {
+        // Obavezno vratiti rezultat i na back dugme
         vratiRezultatNazad();
         super.onBackPressed();
     }

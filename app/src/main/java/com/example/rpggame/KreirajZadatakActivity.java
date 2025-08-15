@@ -25,24 +25,31 @@ import java.util.UUID;
 
 public class KreirajZadatakActivity extends AppCompatActivity {
 
+    // Deklaracije UI elemenata
     private EditText editTextNazivZadatka, editTextOpisZadatka, editTextInterval;
     private Spinner spinnerKategorija, spinnerTezina, spinnerBitnost, spinnerJedinicaPonavljanja;
     private Button buttonVreme, buttonDatumPocetka, buttonDatumZavrsetka, buttonKreirajZadatak;
     private Switch switchPonavljajuci;
     private LinearLayout layoutPonavljajuciDetalji;
 
+    // Pomoćne promenljive
     private Calendar odabranoVreme = Calendar.getInstance();
     private Calendar odabranDatumPocetka = Calendar.getInstance();
     private Calendar odabranDatumZavrsetka = Calendar.getInstance();
     private List<Kategorija> listaKategorija = new ArrayList<>();
 
+    // Promenljive za logiku
     private boolean isEditMode = false;
     private Zadatak zadatakZaIzmenu;
+    private ZadatakRepository zadatakRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_kreiraj_zadatak);
+
+        // Inicijalizacija Repository-ja
+        zadatakRepository = new ZadatakRepository(getApplication());
 
         // Povezivanje elemenata sa layout-om
         editTextNazivZadatka = findViewById(R.id.editTextNazivZadatka);
@@ -66,9 +73,9 @@ public class KreirajZadatakActivity extends AppCompatActivity {
         if (getIntent().hasExtra("ZADATAK_ZA_IZMENU")) {
             isEditMode = true;
             zadatakZaIzmenu = getIntent().getParcelableExtra("ZADATAK_ZA_IZMENU", Zadatak.class);
-            setTitle("Izmena zadatka"); // Promeni naslov ekrana
+            setTitle("Izmena zadatka");
             popuniPoljaZaIzmenu();
-            buttonKreirajZadatak.setText("Sačuvaj izmene"); // Promeni tekst na dugmetu
+            buttonKreirajZadatak.setText("Sačuvaj izmene");
         } else {
             setTitle("Kreiranje novog zadatka");
             updateLabel(buttonDatumPocetka, odabranDatumPocetka);
@@ -82,59 +89,7 @@ public class KreirajZadatakActivity extends AppCompatActivity {
         buttonVreme.setOnClickListener(v -> prikaziTimePicker());
         buttonDatumPocetka.setOnClickListener(v -> prikaziDatePicker(buttonDatumPocetka, odabranDatumPocetka));
         buttonDatumZavrsetka.setOnClickListener(v -> prikaziDatePicker(buttonDatumZavrsetka, odabranDatumZavrsetka));
-
         buttonKreirajZadatak.setOnClickListener(v -> sacuvajIliKreirajZadatak());
-    }
-
-    private void kreirajPrivremeneKategorije() {
-        if (!listaKategorija.isEmpty()) return;
-        listaKategorija.add(new Kategorija("1", "Zdravlje", "#FF5733"));
-        listaKategorija.add(new Kategorija("2", "Učenje", "#337BFF"));
-        listaKategorija.add(new Kategorija("3", "Zabava", "#33FF57"));
-        listaKategorija.add(new Kategorija("4", "Sređivanje", "#F0A0F0"));
-    }
-
-    private void popuniSpinnere() {
-        ArrayAdapter<Kategorija> kategorijaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, listaKategorija);
-        kategorijaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerKategorija.setAdapter(kategorijaAdapter);
-        ArrayAdapter<Zadatak.Tezina> tezinaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, Zadatak.Tezina.values());
-        tezinaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerTezina.setAdapter(tezinaAdapter);
-        ArrayAdapter<Zadatak.Bitnost> bitnostAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, Zadatak.Bitnost.values());
-        bitnostAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerBitnost.setAdapter(bitnostAdapter);
-        ArrayAdapter<Zadatak.TipPonavljanja> jedinicaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, Zadatak.TipPonavljanja.values());
-        jedinicaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerJedinicaPonavljanja.setAdapter(jedinicaAdapter);
-    }
-
-    private void popuniPoljaZaIzmenu() {
-        if (zadatakZaIzmenu == null) return;
-
-        editTextNazivZadatka.setText(zadatakZaIzmenu.getNaziv());
-        editTextOpisZadatka.setText(zadatakZaIzmenu.getOpis());
-
-        for (int i = 0; i < listaKategorija.size(); i++) {
-            if (listaKategorija.get(i).getId().equals(zadatakZaIzmenu.getKategorijaId())) {
-                spinnerKategorija.setSelection(i);
-                break;
-            }
-        }
-        spinnerTezina.setSelection(zadatakZaIzmenu.getTezina().ordinal());
-        spinnerBitnost.setSelection(zadatakZaIzmenu.getBitnost().ordinal());
-
-        odabranDatumPocetka.setTimeInMillis(zadatakZaIzmenu.getDatumPocetka());
-        updateLabel(buttonVreme, odabranDatumPocetka);
-        updateLabel(buttonDatumPocetka, odabranDatumPocetka);
-
-        if (zadatakZaIzmenu.isPonavljajuci()) {
-            switchPonavljajuci.setChecked(true);
-            editTextInterval.setText(String.valueOf(zadatakZaIzmenu.getIntervalPonavljanja()));
-            spinnerJedinicaPonavljanja.setSelection(zadatakZaIzmenu.getTipPonavljanja().ordinal());
-            odabranDatumZavrsetka.setTimeInMillis(zadatakZaIzmenu.getDatumZavrsetka());
-            updateLabel(buttonDatumZavrsetka, odabranDatumZavrsetka);
-        }
     }
 
     private void sacuvajIliKreirajZadatak() {
@@ -163,11 +118,15 @@ public class KreirajZadatakActivity extends AppCompatActivity {
         }
 
         String id = isEditMode ? zadatakZaIzmenu.getId() : UUID.randomUUID().toString();
-
         Zadatak zadatak = new Zadatak(id, naziv, opis, odabranaKategorija.getId(), isPonavljajuci, interval, tipPonavljanja, odabranDatumPocetka.getTimeInMillis(), odabranDatumZavrsetka.getTimeInMillis(), tezina, bitnost);
+
         if (isEditMode) {
-            zadatak.setStatus(zadatakZaIzmenu.getStatus()); // Sačuvaj postojeći status
+            // Sačuvaj postojeći status zadatka prilikom izmene
+            zadatak.setStatus(zadatakZaIzmenu.getStatus());
         }
+
+        // Upis u bazu preko Repository-ja
+        zadatakRepository.insert(zadatak);
 
         if (isEditMode) {
             Intent resultIntent = new Intent();
@@ -176,9 +135,64 @@ public class KreirajZadatakActivity extends AppCompatActivity {
             Toast.makeText(this, "Izmene sačuvane!", Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(this, "Zadatak kreiran!", Toast.LENGTH_SHORT).show();
-            // TODO: Kasnije upis u bazu
         }
-        finish();
+
+        finish(); // Zatvori aktivnost u oba slučaja
+    }
+
+    private void popuniPoljaZaIzmenu() {
+        if (zadatakZaIzmenu == null) return;
+
+        editTextNazivZadatka.setText(zadatakZaIzmenu.getNaziv());
+        editTextOpisZadatka.setText(zadatakZaIzmenu.getOpis());
+
+        for (int i = 0; i < listaKategorija.size(); i++) {
+            if (listaKategorija.get(i).getId().equals(zadatakZaIzmenu.getKategorijaId())) {
+                spinnerKategorija.setSelection(i);
+                break;
+            }
+        }
+        spinnerTezina.setSelection(zadatakZaIzmenu.getTezina().ordinal());
+        spinnerBitnost.setSelection(zadatakZaIzmenu.getBitnost().ordinal());
+
+        odabranDatumPocetka.setTimeInMillis(zadatakZaIzmenu.getDatumPocetka());
+        updateLabel(buttonVreme, odabranDatumPocetka);
+        updateLabel(buttonDatumPocetka, odabranDatumPocetka);
+
+        if (zadatakZaIzmenu.isPonavljajuci()) {
+            switchPonavljajuci.setChecked(true);
+            layoutPonavljajuciDetalji.setVisibility(View.VISIBLE);
+            editTextInterval.setText(String.valueOf(zadatakZaIzmenu.getIntervalPonavljanja()));
+            spinnerJedinicaPonavljanja.setSelection(zadatakZaIzmenu.getTipPonavljanja().ordinal());
+            odabranDatumZavrsetka.setTimeInMillis(zadatakZaIzmenu.getDatumZavrsetka());
+            updateLabel(buttonDatumZavrsetka, odabranDatumZavrsetka);
+        }
+    }
+
+    private void kreirajPrivremeneKategorije() {
+        if (!listaKategorija.isEmpty()) return;
+        listaKategorija.add(new Kategorija("1", "Zdravlje", "#FF5733"));
+        listaKategorija.add(new Kategorija("2", "Učenje", "#337BFF"));
+        listaKategorija.add(new Kategorija("3", "Zabava", "#33FF57"));
+        listaKategorija.add(new Kategorija("4", "Sređivanje", "#F0A0F0"));
+    }
+
+    private void popuniSpinnere() {
+        ArrayAdapter<Kategorija> kategorijaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, listaKategorija);
+        kategorijaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerKategorija.setAdapter(kategorijaAdapter);
+
+        ArrayAdapter<Zadatak.Tezina> tezinaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, Zadatak.Tezina.values());
+        tezinaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerTezina.setAdapter(tezinaAdapter);
+
+        ArrayAdapter<Zadatak.Bitnost> bitnostAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, Zadatak.Bitnost.values());
+        bitnostAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerBitnost.setAdapter(bitnostAdapter);
+
+        ArrayAdapter<Zadatak.TipPonavljanja> jedinicaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, Zadatak.TipPonavljanja.values());
+        jedinicaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerJedinicaPonavljanja.setAdapter(jedinicaAdapter);
     }
 
     private void prikaziTimePicker() {
