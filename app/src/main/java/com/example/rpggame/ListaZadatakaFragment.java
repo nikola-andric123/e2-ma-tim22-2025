@@ -9,8 +9,6 @@ import android.view.ViewGroup;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -18,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.chip.ChipGroup;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -95,48 +94,55 @@ public class ListaZadatakaFragment extends Fragment {
             } else if (checkedId == R.id.chip_ponavljajuci) {
                 trenutniFilter = FilterTip.PONAVLJAJUCI;
             }
-            // Nakon promene filtera, ponovo filtriraj i prikaži listu
             filtrirajIPrikaziZadatke();
         });
     }
 
     private void osveziListuZadataka() {
         zadatakRepository.getSveZadatke(zadaci -> {
-            // Kada su podaci pročitani iz baze, sačuvamo ih
             sviZadaciIzBaze = zadaci;
-            // I onda primenimo trenutni filter
             filtrirajIPrikaziZadatke();
         });
     }
 
     private void filtrirajIPrikaziZadatke() {
-        List<Zadatak> filtriranaLista = new ArrayList<>();
+        // --- POČETAK IZMENE ---
+        // Uzimamo početak današnjeg dana kao referentnu tačku
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        long pocetakDanasnjegDana = cal.getTimeInMillis();
 
-        // Prvo filtriramo po statusu (samo aktivni i pauzirani)
+        // Prvo filtriramo po statusu I DATUMU
         List<Zadatak> aktivniZadaci = sviZadaciIzBaze.stream()
-                .filter(z -> z.getStatus() == Zadatak.Status.AKTIVAN || z.getStatus() == Zadatak.Status.PAUZIRAN)
+                .filter(z -> (z.getStatus() == Zadatak.Status.AKTIVAN || z.getStatus() == Zadatak.Status.PAUZIRAN)
+                        && z.getDatumPocetka() >= pocetakDanasnjegDana) // DODAT USLOV ZA DATUM
                 .collect(Collectors.toList());
+        // --- KRAJ IZMENE ---
+
+        List<Zadatak> konacnaLista;
 
         // Zatim, na osnovu izabranog čipa, primenjujemo dodatni filter
         switch (trenutniFilter) {
             case JEDNOKRATNI:
-                filtriranaLista = aktivniZadaci.stream()
+                konacnaLista = aktivniZadaci.stream()
                         .filter(z -> !z.isPonavljajuci())
                         .collect(Collectors.toList());
                 break;
             case PONAVLJAJUCI:
-                filtriranaLista = aktivniZadaci.stream()
+                konacnaLista = aktivniZadaci.stream()
                         .filter(Zadatak::isPonavljajuci)
                         .collect(Collectors.toList());
                 break;
             case SVI:
             default:
-                filtriranaLista = aktivniZadaci;
+                konacnaLista = aktivniZadaci;
                 break;
         }
 
-        // Na kraju, ažuriramo adapter
-        adapter.updateZadaci(filtriranaLista);
+        adapter.updateZadaci(konacnaLista);
     }
 
     private void kreirajPrivremeneKategorije() {

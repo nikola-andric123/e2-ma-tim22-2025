@@ -79,6 +79,8 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
         txtVreme.setText(formatiranoVreme);
 
         podesiDugmePauza();
+        // POZIVAMO NOVU METODU ZA KONTROLU SVIH DUGMADI
+        podesiStanjeDugmadi();
     }
 
     private void postaviListenere() {
@@ -111,7 +113,7 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
                 Toast.makeText(this, "Zadatak je ponovo aktivan.", Toast.LENGTH_SHORT).show();
             }
             zadatakRepository.insert(trenutniZadatak);
-            podesiDugmePauza();
+            popuniPodatke(); // Ponovo pozivamo da bi se stanje dugmadi osvežilo
         });
 
         btnObrisi.setOnClickListener(v -> {
@@ -119,15 +121,32 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
         });
     }
 
+    // NOVA METODA KOJA KONTROLIŠE DA LI SU DUGMAD AKTIVNA
+    private void podesiStanjeDugmadi() {
+        Zadatak.Status status = trenutniZadatak.getStatus();
+        // Ako je status AKTIVAN ili PAUZIRAN, dugmad su aktivna
+        if (status == Zadatak.Status.AKTIVAN || status == Zadatak.Status.PAUZIRAN) {
+            btnUradjen.setEnabled(true);
+            btnOtkazan.setEnabled(true);
+            btnIzmeni.setEnabled(true);
+            btnObrisi.setEnabled(true);
+        } else { // U suprotnom (URAĐEN, OTKAZAN, NEURAĐEN), dugmad su neaktivna
+            btnUradjen.setEnabled(false);
+            btnOtkazan.setEnabled(false);
+            btnIzmeni.setEnabled(false);
+            btnObrisi.setEnabled(false);
+        }
+        // Dugme za pauzu ima svoju posebnu logiku
+        podesiDugmePauza();
+    }
+
     private void prikaziDijalogZaPotvrduBrisanja() {
         new AlertDialog.Builder(this)
                 .setTitle("Potvrda brisanja")
                 .setMessage("Da li ste sigurni da želite da trajno obrišete ovaj zadatak?")
                 .setPositiveButton("Obriši", (dialog, which) -> {
-                    // Kod koji se izvršava ako korisnik klikne "Obriši"
                     zadatakRepository.delete(trenutniZadatak);
                     Toast.makeText(this, "Zadatak obrisan.", Toast.LENGTH_SHORT).show();
-                    // Postavi rezultat da bi se lista osvežila, ali ne šaljemo nazad obrisani zadatak
                     setResult(Activity.RESULT_OK);
                     finish();
                 })
