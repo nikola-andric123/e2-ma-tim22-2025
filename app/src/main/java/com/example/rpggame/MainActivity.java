@@ -17,17 +17,13 @@ public class MainActivity extends AppCompatActivity {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
         bottomNav.setOnItemSelectedListener(navListener);
 
-        // Postavi početni fragment
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                     new ListaZadatakaFragment()).commit();
         }
 
-        // Deo za Floating Action Button
         FloatingActionButton fab = findViewById(R.id.fab_dodaj_zadatak);
         fab.setOnClickListener(view -> {
-            // Pokrećemo KreirajZadatakActivity bez ikakvih dodatnih podataka,
-            // što znači da je u pitanju "Create Mode" (režim kreiranja)
             Intent intent = new Intent(MainActivity.this, KreirajZadatakActivity.class);
             startActivity(intent);
         });
@@ -42,9 +38,10 @@ public class MainActivity extends AppCompatActivity {
                     selectedFragment = new ListaZadatakaFragment();
                 } else if (itemId == R.id.nav_kalendar) {
                     selectedFragment = new KalendarFragment();
+                } else if (itemId == R.id.nav_kategorije) { // AŽURIRAN DEO
+                    selectedFragment = new KategorijeFragment(); // FRAGMENT KOJI ĆEMO NAPRAVITI
                 } else if (itemId == R.id.nav_profil) {
                     // TODO: Kreirati i postaviti ProfilFragment
-                    // selectedFragment = new ProfilFragment();
                 }
 
                 if (selectedFragment != null) {

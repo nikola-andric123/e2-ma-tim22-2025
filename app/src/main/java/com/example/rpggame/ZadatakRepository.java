@@ -3,7 +3,6 @@ package com.example.rpggame;
 import android.app.Application;
 import android.os.Handler;
 import android.os.Looper;
-
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -11,43 +10,49 @@ import java.util.concurrent.Executors;
 public class ZadatakRepository {
 
     private ZadatakDao zadatakDao;
+    private KategorijaDao kategorijaDao; // DODATO
     private ExecutorService executorService;
     private Handler mainThreadHandler;
 
-    // Definišemo interfejs za povratni poziv (listener)
     public interface OnTasksLoadedListener {
         void onTasksLoaded(List<Zadatak> zadaci);
+    }
+
+    // NOVI INTERFEJS
+    public interface OnCategoriesLoadedListener {
+        void onCategoriesLoaded(List<Kategorija> kategorije);
     }
 
     public ZadatakRepository(Application application) {
         AppDatabase db = AppDatabase.getDatabase(application);
         this.zadatakDao = db.zadatakDao();
+        this.kategorijaDao = db.kategorijaDao(); // DODATO
         this.executorService = Executors.newSingleThreadExecutor();
-        // Handler koji će nam omogućiti da rezultate vratimo na glavnu (UI) nit
         this.mainThreadHandler = new Handler(Looper.getMainLooper());
     }
 
+    // --- Metode za Zadatke (ostaju iste) ---
     public void insert(Zadatak zadatak) {
-        executorService.execute(() -> {
-            zadatakDao.insert(zadatak);
-        });
+        executorService.execute(() -> zadatakDao.insert(zadatak));
     }
-
     public void delete(Zadatak zadatak) {
-        executorService.execute(() -> {
-            zadatakDao.delete(zadatak);
-        });
+        executorService.execute(() -> zadatakDao.delete(zadatak));
     }
-
-    // Metoda sada prima listener kao parametar da bi vratila rezultat asinhrono
     public void getSveZadatke(OnTasksLoadedListener listener) {
         executorService.execute(() -> {
-            // Operacija čitanja se dešava u pozadini
             final List<Zadatak> zadaci = zadatakDao.getSveZadatke();
-            // Kada je gotovo, šaljemo rezultat na glavnu nit
-            mainThreadHandler.post(() -> {
-                listener.onTasksLoaded(zadaci);
-            });
+            mainThreadHandler.post(() -> listener.onTasksLoaded(zadaci));
+        });
+    }
+
+    // --- NOVE Metode za Kategorije ---
+    public void insert(Kategorija kategorija) {
+        executorService.execute(() -> kategorijaDao.insert(kategorija));
+    }
+    public void getSveKategorije(OnCategoriesLoadedListener listener) {
+        executorService.execute(() -> {
+            final List<Kategorija> kategorije = kategorijaDao.getSveKategorije();
+            mainThreadHandler.post(() -> listener.onCategoriesLoaded(kategorije));
         });
     }
 }
