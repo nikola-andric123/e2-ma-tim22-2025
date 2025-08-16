@@ -1,6 +1,7 @@
 package com.example.rpggame;
 
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,30 +11,27 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 public class ZadatakAdapter extends RecyclerView.Adapter<ZadatakAdapter.ZadatakViewHolder> {
 
     private List<Zadatak> zadaci;
-    private List<Kategorija> kategorije; // Treba nam lista kategorija zbog boja
+    private List<Kategorija> kategorije;
     private OnItemClickListener listener;
 
     public interface OnItemClickListener {
         void onItemClick(Zadatak zadatak);
     }
-    public void updateZadaci(List<Zadatak> noviZadaci) {
-        this.zadaci.clear();
-        this.zadaci.addAll(noviZadaci);
-        notifyDataSetChanged(); // Javi RecyclerView-u da se podaci promenili
-    }
-    // NOVO: Metoda za postavljanje listenera
+
     public void setOnItemClickListener(OnItemClickListener listener) {
         this.listener = listener;
     }
+
     public ZadatakAdapter(List<Zadatak> zadaci, List<Kategorija> kategorije) {
-        this.zadaci = zadaci;
-        this.kategorije = kategorije;
+        this.zadaci = new ArrayList<>(zadaci);
+        this.kategorije = new ArrayList<>(kategorije);
     }
 
     @NonNull
@@ -48,17 +46,24 @@ public class ZadatakAdapter extends RecyclerView.Adapter<ZadatakAdapter.ZadatakV
         Zadatak zadatak = zadaci.get(position);
         holder.textViewNaziv.setText(zadatak.getNaziv());
 
-        // Formatiramo vreme
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
         holder.textViewVreme.setText(sdf.format(zadatak.getDatumPocetka()));
 
-        // Postavljamo boju kategorije
+        // Pronalazimo odgovarajuću boju za kategoriju
+        String bojaHex = "#808080"; // Siva boja kao default
         for(Kategorija k : kategorije){
             if(k.getId().equals(zadatak.getKategorijaId())){
-                holder.viewBoja.setBackgroundColor(Color.parseColor(k.getBoja()));
+                bojaHex = k.getBoja();
                 break;
             }
         }
+        try {
+            holder.viewBoja.setBackgroundColor(Color.parseColor(bojaHex));
+        } catch (IllegalArgumentException e) {
+            holder.viewBoja.setBackgroundColor(Color.GRAY);
+        }
+
+        // Povezujemo klik na ceo red
         holder.bind(zadatak, listener);
     }
 
@@ -67,7 +72,20 @@ public class ZadatakAdapter extends RecyclerView.Adapter<ZadatakAdapter.ZadatakV
         return zadaci.size();
     }
 
-    // ViewHolder drži reference na view elemente jednog reda
+    // Metoda za ažuriranje liste zadataka
+    public void updateZadaci(List<Zadatak> noviZadaci) {
+        this.zadaci.clear();
+        this.zadaci.addAll(noviZadaci);
+        notifyDataSetChanged();
+    }
+
+    // NOVA METODA KOJA JE NEDOSTAJALA
+    public void setKategorije(List<Kategorija> noveKategorije) {
+        this.kategorije.clear();
+        this.kategorije.addAll(noveKategorije);
+        // Nije potreban notifyDataSetChanged jer se prikaz neće promeniti dok se ne pozove updateZadaci
+    }
+
     public static class ZadatakViewHolder extends RecyclerView.ViewHolder {
         TextView textViewNaziv;
         TextView textViewVreme;
@@ -81,8 +99,11 @@ public class ZadatakAdapter extends RecyclerView.Adapter<ZadatakAdapter.ZadatakV
             viewBoja = itemView.findViewById(R.id.viewBojaKategorije);
             checkBoxUradjeno = itemView.findViewById(R.id.checkboxUradjeno);
         }
+
         public void bind(final Zadatak zadatak, final OnItemClickListener listener) {
-            itemView.setOnClickListener(v -> listener.onItemClick(zadatak));
+            if(listener != null) {
+                itemView.setOnClickListener(v -> listener.onItemClick(zadatak));
+            }
         }
     }
 }

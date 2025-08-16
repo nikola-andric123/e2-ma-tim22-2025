@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 
 public class ListaZadatakaFragment extends Fragment {
 
-    // Definišemo tipove filtera radi lakšeg snalaženja
     private enum FilterTip {
         SVI, JEDNOKRATNI, PONAVLJAJUCI
     }
@@ -33,50 +32,52 @@ public class ListaZadatakaFragment extends Fragment {
     private ChipGroup chipGroupFilter;
 
     private List<Zadatak> sviZadaciIzBaze = new ArrayList<>();
-    private List<Kategorija> privremenaListaKategorija = new ArrayList<>();
-    private FilterTip trenutniFilter = FilterTip.SVI; // Početni filter
+    private List<Kategorija> sveKategorijeIzBaze = new ArrayList<>();
+    private FilterTip trenutniFilter = FilterTip.SVI;
 
     private ActivityResultLauncher<Intent> detaljiLauncher;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         zadatakRepository = new ZadatakRepository(getActivity().getApplication());
 
         detaljiLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == Activity.RESULT_OK) {
-                        osveziListuZadataka();
+                        ucitajKategorije(); // Osveži sve podatke
                     }
                 });
-
-        kreirajPrivremeneKategorije();
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_lista_zadataka, container, false);
-
         recyclerView = view.findViewById(R.id.recyclerViewZadaci);
         chipGroupFilter = view.findViewById(R.id.chip_group_filter);
-
         setupRecyclerView();
         setupFilterListener();
-
         return view;
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        osveziListuZadataka();
+        ucitajKategorije();
+    }
+
+    private void ucitajKategorije() {
+        zadatakRepository.getSveKategorije(kategorije -> {
+            sveKategorijeIzBaze = kategorije;
+            adapter.setKategorije(sveKategorijeIzBaze);
+            osveziListuZadataka();
+        });
     }
 
     private void setupRecyclerView() {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new ZadatakAdapter(new ArrayList<>(), privremenaListaKategorija);
+        adapter = new ZadatakAdapter(new ArrayList<>(), new ArrayList<>());
         adapter.setOnItemClickListener(zadatak -> {
             Intent intent = new Intent(getActivity(), DetaljiZadatkaActivity.class);
             intent.putExtra("KLJUC_ZADATAK", zadatak);
@@ -106,8 +107,6 @@ public class ListaZadatakaFragment extends Fragment {
     }
 
     private void filtrirajIPrikaziZadatke() {
-        // --- POČETAK IZMENE ---
-        // Uzimamo početak današnjeg dana kao referentnu tačku
         Calendar cal = Calendar.getInstance();
         cal.set(Calendar.HOUR_OF_DAY, 0);
         cal.set(Calendar.MINUTE, 0);
@@ -115,16 +114,13 @@ public class ListaZadatakaFragment extends Fragment {
         cal.set(Calendar.MILLISECOND, 0);
         long pocetakDanasnjegDana = cal.getTimeInMillis();
 
-        // Prvo filtriramo po statusu I DATUMU
         List<Zadatak> aktivniZadaci = sviZadaciIzBaze.stream()
                 .filter(z -> (z.getStatus() == Zadatak.Status.AKTIVAN || z.getStatus() == Zadatak.Status.PAUZIRAN)
-                        && z.getDatumPocetka() >= pocetakDanasnjegDana) // DODAT USLOV ZA DATUM
+                        && z.getDatumPocetka() >= pocetakDanasnjegDana)
                 .collect(Collectors.toList());
-        // --- KRAJ IZMENE ---
 
         List<Zadatak> konacnaLista;
 
-        // Zatim, na osnovu izabranog čipa, primenjujemo dodatni filter
         switch (trenutniFilter) {
             case JEDNOKRATNI:
                 konacnaLista = aktivniZadaci.stream()
@@ -143,13 +139,5 @@ public class ListaZadatakaFragment extends Fragment {
         }
 
         adapter.updateZadaci(konacnaLista);
-    }
-
-    private void kreirajPrivremeneKategorije() {
-        if (!privremenaListaKategorija.isEmpty()) return;
-        Kategorija katZdravlje = new Kategorija("1", "Zdravlje", "#FF5733");
-        Kategorija katUcenje = new Kategorija("2", "Učenje", "#337BFF");
-        privremenaListaKategorija.add(katZdravlje);
-        privremenaListaKategorija.add(katUcenje);
     }
 }
