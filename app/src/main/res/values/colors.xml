@@ -1,5 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <color name="kategorija_crvena">#E57373</color>
+    <color name="kategorija_plava">#64B5F6</color>
+    <color name="kategorija_zelena">#81C784</color>
+    <color name="kategorija_zuta">#FFF176</color>
+    <color name="kategorija_narandzasta">#FFB74D</color>
+    <color name="kategorija_ljubicasta">#BA68C8</color>
 </resources>

@@ -12,6 +12,11 @@
         android:title="Kalendar"/>
 
     <item
+        android:id="@+id/nav_kategorije"
+        android:icon="@android:drawable/ic_menu_edit"
+        android:title="Kategorije"/>
+
+    <item
         android:id="@+id/nav_profil"
         android:icon="@android:drawable/ic_menu_manage"
         android:title="Profil"/>
