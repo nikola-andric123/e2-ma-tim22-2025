@@ -8,4 +8,7 @@
     <color name="kategorija_zuta">#FFF176</color>
     <color name="kategorija_narandzasta">#FFB74D</color>
     <color name="kategorija_ljubicasta">#BA68C8</color>
+
+    <color name="my_primary">#5E35B1</color>
+    <color name="my_secondary">#673AB7</color>
 </resources>

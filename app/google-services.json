@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1023971497122",
+    "project_id": "rpggame-fcbd1",
+    "storage_bucket": "rpggame-fcbd1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1023971497122:android:eeb2991839ae87d3aa33fb",
+        "android_client_info": {
+          "package_name": "com.example.rpggame"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBsvXARCdrzEML9QmT4eV_hXWQ4rjhYmyw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
