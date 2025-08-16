@@ -28,10 +28,10 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
         auth = FirebaseAuth.getInstance();
-        button = findViewById(R.id.logout);
-        myProfileBtn = findViewById(R.id.myProfile);
+        //button = findViewById(R.id.logout);
+        //myProfileBtn = findViewById(R.id.myProfile);
         user = auth.getCurrentUser();
-        text = findViewById(R.id.userDetails);
+        //text = findViewById(R.id.userDetails);
         if(user == null || !user.isEmailVerified()){
             Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
             startActivity(intent);
@@ -58,11 +58,11 @@ public class MainActivity extends AppCompatActivity {
                 finish();
             }
         });
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+        /*ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
-        });
+        });*/
     }
     private void goToProfile(String userUID){
         Intent intent = new Intent(getApplicationContext(), UserProfileActivity.class);

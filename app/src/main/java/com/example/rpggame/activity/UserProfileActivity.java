@@ -121,7 +121,7 @@ public class UserProfileActivity extends AppCompatActivity {
                         return;
                     }
 
-                    // TODO: Call Firebase Auth reauthenticate + updatePassword here
+
                     AuthCredential credential = EmailAuthProvider
                             .getCredential(currentUser.getEmail(), current);
                     currentUser.reauthenticate(credential)

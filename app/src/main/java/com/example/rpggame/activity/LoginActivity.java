@@ -15,6 +15,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.rpggame.MainActivity;
 import com.example.rpggame.R;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -77,7 +78,7 @@ public class LoginActivity extends AppCompatActivity {
                                     FirebaseUser user = mAuth.getCurrentUser();
                                     if (user != null && user.isEmailVerified()) {
                                         // ✅ Email verified → allow access
-                                        startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                                        startActivity(new Intent(getApplicationContext(), MainActivity.class));
                                         finish();
                                     } else {
                                         // ❌ Email not verified → log out & inform user
