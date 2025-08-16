@@ -1,7 +1,10 @@
 package com.example.rpggame.domain;
 
 import com.example.rpggame.Enums.UserTitle;
+import com.google.firebase.Timestamp;
 import com.google.type.DateTime;
+
+import java.sql.Time;
 
 public class UserProfile {
 
@@ -14,13 +17,13 @@ public class UserProfile {
     private int numberOfBadges;
     private UserTitle title;
     private String avatar;
-    private DateTime dateCreated;
+    private Timestamp dateCreated;
 
     public UserProfile(){
 
     }
     public UserProfile(String username, String email, int level, int powerPoints, int experiencePoints, int collectedCoins, int numberOfBadges, UserTitle title, String avatar,
-                       DateTime dateCreated) {
+                       Timestamp dateCreated) {
         this.username = username;
         this.email = email;
         this.level = level;
@@ -33,11 +36,11 @@ public class UserProfile {
         this.dateCreated = dateCreated;
     }
 
-    public DateTime getDateCreated() {
+    public Timestamp getDateCreated() {
         return dateCreated;
     }
 
-    public void setDateCreated(DateTime dateCreated) {
+    public void setDateCreated(Timestamp dateCreated) {
         this.dateCreated = dateCreated;
     }
 
