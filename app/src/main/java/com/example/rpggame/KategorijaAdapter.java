@@ -14,6 +14,16 @@ import java.util.List;
 public class KategorijaAdapter extends RecyclerView.Adapter<KategorijaAdapter.KategorijaViewHolder> {
 
     private List<Kategorija> kategorije = new ArrayList<>();
+    private OnItemClickListener listener;
+
+    // Interfejs za obradu klika
+    public interface OnItemClickListener {
+        void onItemClick(Kategorija kategorija);
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
+    }
 
     @NonNull
     @Override
@@ -25,19 +35,7 @@ public class KategorijaAdapter extends RecyclerView.Adapter<KategorijaAdapter.Ka
     @Override
     public void onBindViewHolder(@NonNull KategorijaViewHolder holder, int position) {
         Kategorija kategorija = kategorije.get(position);
-        holder.nazivKategorije.setText(kategorija.getNaziv());
-
-        // Postavljamo boju na kružić
-        GradientDrawable background = new GradientDrawable();
-        background.setShape(GradientDrawable.OVAL);
-        try {
-            background.setColor(Color.parseColor(kategorija.getBoja()));
-            holder.bojaKategorije.setBackground(background);
-        } catch (Exception e) {
-            // U slučaju da je boja pogrešna, stavi default
-            background.setColor(Color.LTGRAY);
-            holder.bojaKategorije.setBackground(background);
-        }
+        holder.bind(kategorija, listener); // Povezujemo podatke i listener
     }
 
     @Override
@@ -59,6 +57,26 @@ public class KategorijaAdapter extends RecyclerView.Adapter<KategorijaAdapter.Ka
             super(itemView);
             bojaKategorije = itemView.findViewById(R.id.viewBojaKategorije);
             nazivKategorije = itemView.findViewById(R.id.textViewNazivKategorije);
+        }
+
+        // Metoda koja postavlja podatke i listener za klik
+        public void bind(final Kategorija kategorija, final OnItemClickListener listener) {
+            nazivKategorije.setText(kategorija.getNaziv());
+
+            GradientDrawable background = new GradientDrawable();
+            background.setShape(GradientDrawable.OVAL);
+            try {
+                background.setColor(Color.parseColor(kategorija.getBoja()));
+            } catch (Exception e) {
+                background.setColor(Color.LTGRAY);
+            }
+            bojaKategorije.setBackground(background);
+
+            itemView.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onItemClick(kategorija);
+                }
+            });
         }
     }
 }
