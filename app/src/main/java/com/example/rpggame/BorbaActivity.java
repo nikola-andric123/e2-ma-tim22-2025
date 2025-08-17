@@ -36,6 +36,7 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
 
     private ZadatakRepository repository;
     private UserProfile trenutniKorisnik;
+    private Boss trenutniBoss;
 
     private int maxHpBosa, trenutniHpBosa, sansaZaPogodak;
     private int preostaliNapadi = 5;
@@ -74,10 +75,10 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
             if (userProfile != null) {
                 this.trenutniKorisnik = userProfile;
 
-                // --- PRIVREMENO ZA TESTIRANJE ---
+                // --- PRIVREMENO ZA TESTIRANJE (VRAĆENO) ---
                 // Postavljamo fiksnu snagu od 150 da bi se lakše testirala borba.
                 // Ovu liniju treba obrisati kasnije!
-                trenutniKorisnik.setPowerPoints(150);
+                this.trenutniKorisnik.setPowerPoints(150);
                 // --- KRAJ PRIVREMENOG KODA ---
 
                 ucitajZadatkeZaRacunanjeSanse();
@@ -99,8 +100,13 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
         ppKorisnikaText.setText("Tvoja snaga (PP): " + trenutniKorisnik.getPowerPoints());
         sansaNapadaText.setText("Šansa za pogodak: " + this.sansaZaPogodak + "%");
 
-        this.maxHpBosa = izracunajHpBosa(trenutniKorisnik.getLevel());
+        int nivoBosa = trenutniKorisnik.getLevel();
+        if (nivoBosa <= 0) nivoBosa = 1;
+
+        this.maxHpBosa = izracunajHpBosa(nivoBosa);
         this.trenutniHpBosa = this.maxHpBosa;
+
+        this.trenutniBoss = new Boss(nivoBosa, maxHpBosa, false);
 
         hpBosaBar.setMax(this.maxHpBosa);
         hpBosaBar.setProgress(this.trenutniHpBosa);
@@ -136,6 +142,7 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
     private void zavrsiBorbu(boolean pobeda) {
         dugmeNapad.setEnabled(false);
         if (pobeda) {
+            trenutniBoss.setDefeated(true);
             hpBosaText.setText("PORAŽEN!");
             prikaziDijalogNagrade(true);
         } else {
@@ -147,6 +154,7 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
                 finish();
             }
         }
+        repository.insert(trenutniBoss);
     }
 
     private void prikaziDijalogNagrade(boolean punaNagrada) {
@@ -174,6 +182,9 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
             nagradaOprema.setText("+ Oprema: " + dobijenaOprema);
             nagradaOprema.setVisibility(View.VISIBLE);
         }
+
+        trenutniKorisnik.setCollectedCoins(trenutniKorisnik.getCollectedCoins() + dobijeniNovcici);
+        repository.updateUserProfile(trenutniKorisnik);
 
         builder.setPositiveButton("Zatvori", (dialog, which) -> finish());
         rewardsDialog = builder.create();
