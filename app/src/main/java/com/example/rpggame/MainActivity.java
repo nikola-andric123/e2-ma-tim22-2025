@@ -2,6 +2,8 @@ package com.example.rpggame;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Button;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
@@ -20,13 +22,16 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         auth = FirebaseAuth.getInstance();
         user = auth.getCurrentUser();
         if(user == null || !user.isEmailVerified()){
             Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
             startActivity(intent);
             finish();
+            return; // Važno je dodati return da se ostatak koda ne bi izvršio
         }
+
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
         bottomNav.setOnItemSelectedListener(navListener);
 
@@ -40,6 +45,13 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(MainActivity.this, KreirajZadatakActivity.class);
             startActivity(intent);
         });
+
+        // DODAT DEO: Listener za test dugme
+        Button testBorbaDugme = findViewById(R.id.test_borba_dugme);
+        testBorbaDugme.setOnClickListener(view -> {
+            Intent intent = new Intent(MainActivity.this, BorbaActivity.class);
+            startActivity(intent);
+        });
     }
 
     private final BottomNavigationView.OnItemSelectedListener navListener =
@@ -51,13 +63,12 @@ public class MainActivity extends AppCompatActivity {
                     selectedFragment = new ListaZadatakaFragment();
                 } else if (itemId == R.id.nav_kalendar) {
                     selectedFragment = new KalendarFragment();
-                } else if (itemId == R.id.nav_kategorije) { // AŽURIRAN DEO
-                    selectedFragment = new KategorijeFragment(); // FRAGMENT KOJI ĆEMO NAPRAVITI
+                } else if (itemId == R.id.nav_kategorije) {
+                    selectedFragment = new KategorijeFragment();
                 } else if (itemId == R.id.nav_profil) {
-                    // TODO: Kreirati i postaviti ProfilFragment
                     selectedFragment = new UserProfileFragment();
-
                 }
+
                 if(selectedFragment != null && itemId == R.id.nav_profil){
                     Bundle bundle = new Bundle();
                     bundle.putString("userId", user.getUid());
@@ -67,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
                     getSupportFragmentManager()
                             .beginTransaction()
                             .replace(R.id.fragment_container, fragment)
-                            .addToBackStack(null)
+                            .addToBackStack(null) // Omogućava povratak na prethodni fragment
                             .commit();
                 }
                 else if (selectedFragment != null) {

@@ -6,63 +6,49 @@ import android.os.Parcelable;
 import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
-// @Entity anotacija označava da je ova klasa tabela u bazi podataka.
 @Entity(tableName = "zadatak_table")
 public class Zadatak implements Parcelable {
 
-    // Enum-i ostaju isti
     public enum Tezina { VEOMA_LAK, LAK, TEZAK, EKSTREMNO_TEZAK }
     public enum Bitnost { NORMALAN, VAZAN, EKSTREMNO_VAZAN, SPECIJALAN }
     public enum Status { AKTIVAN, URADJEN, NEURADJEN, PAUZIRAN, OTKAZAN }
     public enum TipPonavljanja { DAN, NEDELJA }
 
-    // @PrimaryKey označava da je 'id' primarni ključ. autoGenerate = true bi bilo za brojeve,
-    // ali pošto koristimo nasumični string (UUID), ne treba nam.
     @PrimaryKey
     @NonNull
     @ColumnInfo(name = "id")
     private String id;
 
-    // @ColumnInfo daje specifično ime koloni u tabeli. Dobra praksa.
     @ColumnInfo(name = "naziv")
     private String naziv;
-
     @ColumnInfo(name = "opis")
     private String opis;
-
     @ColumnInfo(name = "kategorija_id")
     private String kategorijaId;
-
     @ColumnInfo(name = "ponavljajuci")
     private boolean ponavljajuci;
-
     @ColumnInfo(name = "interval_ponavljanja")
     private int intervalPonavljanja;
-
     @ColumnInfo(name = "tip_ponavljanja")
     private TipPonavljanja tipPonavljanja;
-
     @ColumnInfo(name = "datum_pocetka")
     private long datumPocetka;
-
     @ColumnInfo(name = "datum_zavrsetka")
     private long datumZavrsetka;
-
     @ColumnInfo(name = "tezina")
     private Tezina tezina;
-
     @ColumnInfo(name = "bitnost")
     private Bitnost bitnost;
-
     @ColumnInfo(name = "status")
     private Status status;
 
-    // Konstruktori, getteri i setteri ostaju isti.
-    // Room će ih koristiti za kreiranje objekata iz baze.
     public Zadatak() {}
 
+    // ISPRAVKA: Dodata @Ignore anotacija
+    @Ignore
     public Zadatak(@NonNull String id, String naziv, String opis, String kategorijaId, boolean ponavljajuci, int intervalPonavljanja, TipPonavljanja tipPonavljanja, long datumPocetka, long datumZavrsetka, Tezina tezina, Bitnost bitnost) {
         this.id = id;
         this.naziv = naziv;
@@ -78,7 +64,7 @@ public class Zadatak implements Parcelable {
         this.status = Status.AKTIVAN;
     }
 
-    // Getteri i Setteri ostaju isti...
+    // Getteri i Setteri...
     @NonNull
     public String getId() { return id; }
     public void setId(@NonNull String id) { this.id = id; }
@@ -105,7 +91,8 @@ public class Zadatak implements Parcelable {
     public Status getStatus() { return status; }
     public void setStatus(Status status) { this.status = status; }
 
-    // Parcelable kod ostaje potpuno isti
+    // Parcelable kod ostaje isti...
+    @Ignore
     protected Zadatak(Parcel in) {
         id = in.readString();
         naziv = in.readString();
@@ -124,7 +111,6 @@ public class Zadatak implements Parcelable {
         int tmpTipPonavljanja = in.readInt();
         tipPonavljanja = tmpTipPonavljanja == -1 ? null : TipPonavljanja.values()[tmpTipPonavljanja];
     }
-
     @Override
     public void writeToParcel(@NonNull Parcel dest, int flags) {
         dest.writeString(id);
@@ -140,7 +126,6 @@ public class Zadatak implements Parcelable {
         dest.writeInt(status == null ? -1 : status.ordinal());
         dest.writeInt(tipPonavljanja == null ? -1 : tipPonavljanja.ordinal());
     }
-
     @Override
     public int describeContents() { return 0; }
     public static final Creator<Zadatak> CREATOR = new Creator<Zadatak>() {
