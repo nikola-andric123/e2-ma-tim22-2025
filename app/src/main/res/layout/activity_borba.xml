@@ -14,7 +14,7 @@
         android:layout_height="200dp"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="32dp"
-        android:src="@drawable/ic_launcher_foreground"
+        android:src="@drawable/boss_zmaj"
         tools:srcCompat="@tools:sample/avatars" />
 
     <com.airbnb.lottie.LottieAnimationView
