@@ -7,6 +7,8 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -43,7 +45,9 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
 
     private SensorManager sensorManager;
     private Sensor accelerometer;
-    private boolean isShakeListenerActive = false;
+    private boolean isFightShakeListenerActive = false;
+    private boolean isRewardShakeListenerActive = false;
+    private boolean napadUToku = false;
     private AlertDialog rewardsDialog;
 
     @Override
@@ -60,6 +64,9 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
         hpBosaBar = findViewById(R.id.hp_bosa_bar);
         dugmeNapad = findViewById(R.id.dugme_napad);
 
+        dugmeNapad.setEnabled(true);
+        dugmeNapad.setText("NAPAD!");
+
         repository = new ZadatakRepository(getApplication());
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         if (sensorManager != null) {
@@ -67,20 +74,70 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
         }
 
         ucitajPodatkeKorisnika();
-        dugmeNapad.setOnClickListener(v -> izvrsiNapad());
+        dugmeNapad.setOnClickListener(v -> pokusajNapad());
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor.getType() != Sensor.TYPE_ACCELEROMETER) return;
+
+        float x = event.values[0];
+        float y = event.values[1];
+        float z = event.values[2];
+        float gForce = (float) Math.sqrt(x * x + y * y + z * z);
+
+        if (isFightShakeListenerActive && gForce > 12) {
+            pokusajNapad();
+        }
+
+        if (isRewardShakeListenerActive && gForce > 12) {
+            isRewardShakeListenerActive = false;
+            if (rewardsDialog != null && rewardsDialog.isShowing()) {
+                LottieAnimationView animacijaKovcega = rewardsDialog.findViewById(R.id.animacija_kovcega);
+                if (animacijaKovcega != null && !animacijaKovcega.isAnimating()) {
+                    animacijaKovcega.playAnimation();
+                }
+            }
+        }
+    }
+
+    private void pokusajNapad() {
+        if (napadUToku || preostaliNapadi <= 0 || trenutniHpBosa <= 0) {
+            return;
+        }
+        napadUToku = true;
+        izvrsiNapad();
+        new Handler(Looper.getMainLooper()).postDelayed(() -> napadUToku = false, 1500);
+    }
+
+    private void izvrsiNapad() {
+        preostaliNapadi--;
+        brojacNapadaText.setText("Preostali napadi: " + this.preostaliNapadi + "/5");
+
+        int random = new Random().nextInt(100);
+        if (random < this.sansaZaPogodak) {
+            animirajUdaracBosa();
+            trenutniHpBosa -= trenutniKorisnik.getPowerPoints();
+            if (trenutniHpBosa < 0) trenutniHpBosa = 0;
+        } else {
+            Toast.makeText(this, "Promašaj!", Toast.LENGTH_SHORT).show();
+        }
+
+        hpBosaBar.setProgress(this.trenutniHpBosa);
+        hpBosaText.setText("Boss HP: " + this.trenutniHpBosa + "/" + this.maxHpBosa);
+
+        if (trenutniHpBosa <= 0) {
+            zavrsiBorbu(true);
+        } else if (preostaliNapadi <= 0) {
+            zavrsiBorbu(false);
+        }
     }
 
     private void ucitajPodatkeKorisnika() {
         repository.getUserProfile(userProfile -> {
             if (userProfile != null) {
                 this.trenutniKorisnik = userProfile;
-
-                // --- PRIVREMENO ZA TESTIRANJE (VRAĆENO) ---
-                // Postavljamo fiksnu snagu od 150 da bi se lakše testirala borba.
-                // Ovu liniju treba obrisati kasnije!
                 this.trenutniKorisnik.setPowerPoints(150);
-                // --- KRAJ PRIVREMENOG KODA ---
-
                 ucitajZadatkeZaRacunanjeSanse();
             } else {
                 Toast.makeText(this, "Greška: Nije moguće učitati profil korisnika.", Toast.LENGTH_LONG).show();
@@ -112,35 +169,14 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
         hpBosaBar.setProgress(this.trenutniHpBosa);
         hpBosaText.setText("Boss HP: " + this.trenutniHpBosa + "/" + this.maxHpBosa);
         brojacNapadaText.setText("Preostali napadi: " + this.preostaliNapadi + "/5");
-    }
-
-    private void izvrsiNapad() {
-        if (preostaliNapadi <= 0 || trenutniHpBosa <= 0) return;
-
-        preostaliNapadi--;
-        brojacNapadaText.setText("Preostali napadi: " + this.preostaliNapadi + "/5");
-
-        int random = new Random().nextInt(100);
-        if (random < this.sansaZaPogodak) {
-            animirajUdaracBosa();
-            trenutniHpBosa -= trenutniKorisnik.getPowerPoints();
-            if (trenutniHpBosa < 0) trenutniHpBosa = 0;
-        } else {
-            Toast.makeText(this, "Promašaj!", Toast.LENGTH_SHORT).show();
-        }
-
-        hpBosaBar.setProgress(this.trenutniHpBosa);
-        hpBosaText.setText("Boss HP: " + this.trenutniHpBosa + "/" + this.maxHpBosa);
-
-        if (trenutniHpBosa <= 0) {
-            zavrsiBorbu(true);
-        } else if (preostaliNapadi <= 0) {
-            zavrsiBorbu(false);
-        }
+        isFightShakeListenerActive = true;
     }
 
     private void zavrsiBorbu(boolean pobeda) {
+        isFightShakeListenerActive = false;
         dugmeNapad.setEnabled(false);
+        dugmeNapad.setText("BORBA ZAVRŠENA");
+
         if (pobeda) {
             trenutniBoss.setDefeated(true);
             hpBosaText.setText("PORAŽEN!");
@@ -190,7 +226,7 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
         rewardsDialog = builder.create();
         rewardsDialog.show();
 
-        isShakeListenerActive = true;
+        isRewardShakeListenerActive = true;
 
         animacijaKovcega.addAnimatorListener(new Animator.AnimatorListener() {
             @Override public void onAnimationStart(@NonNull Animator animation) {
@@ -208,31 +244,12 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
         animacijaUdarca.playAnimation();
         animacijaUdarca.addAnimatorListener(new Animator.AnimatorListener() {
             @Override public void onAnimationStart(@NonNull Animator animation) {}
-            @Override public void onAnimationEnd(@NonNull Animator animation) {
-                animacijaUdarca.setVisibility(View.GONE);
-            }
+            @Override public void onAnimationEnd(@NonNull Animator animation) { animacijaUdarca.setVisibility(View.GONE); }
             @Override public void onAnimationCancel(@NonNull Animator animation) {}
             @Override public void onAnimationRepeat(@NonNull Animator animation) {}
         });
     }
 
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        if (!isShakeListenerActive || event.sensor.getType() != Sensor.TYPE_ACCELEROMETER) return;
-        float x = event.values[0];
-        float y = event.values[1];
-        float z = event.values[2];
-        float gForce = (float) Math.sqrt(x * x + y * y + z * z);
-        if (gForce > 12) {
-            isShakeListenerActive = false;
-            if (rewardsDialog != null && rewardsDialog.isShowing()) {
-                LottieAnimationView animacijaKovcega = rewardsDialog.findViewById(R.id.animacija_kovcega);
-                if (animacijaKovcega != null && !animacijaKovcega.isAnimating()) {
-                    animacijaKovcega.playAnimation();
-                }
-            }
-        }
-    }
     @Override public void onAccuracyChanged(Sensor sensor, int accuracy) {}
 
     @Override
@@ -266,9 +283,7 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
         for (Zadatak z : sviZadaci) {
             if (z.getStatus() == Zadatak.Status.URADJEN || z.getStatus() == Zadatak.Status.NEURADJEN) {
                 ukupnoRelevantnih++;
-                if (z.getStatus() == Zadatak.Status.URADJEN) {
-                    uradjeni++;
-                }
+                if (z.getStatus() == Zadatak.Status.URADJEN) { uradjeni++; }
             }
         }
         if (ukupnoRelevantnih == 0) return 100;
