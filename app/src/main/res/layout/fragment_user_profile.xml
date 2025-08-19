@@ -33,6 +33,18 @@
             android:layout_centerInParent="true"
             android:layout_gravity="center"
             android:visibility="visible"/>
+        <ImageView
+            android:id="@+id/menuIcon"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:layout_alignParentEnd="true"
+            android:layout_margin="16dp"
+            android:padding="8dp"
+            android:src="@drawable/baseline_more_vert_24"
+            android:contentDescription="Menu"
+            android:clickable="true"
+            android:focusable="true"/><!-- use hamburger or 3-dots icon -->
+    <!--
         <Button
             android:id="@+id/logout"
             android:layout_width="wrap_content"
@@ -42,6 +54,7 @@
             android:text="Logout"
             android:textColor="@android:color/white"
             android:background="@drawable/rounded_button"/>
+            -->
 
         <!-- Profile container (hidden until data loads) -->
         <LinearLayout
@@ -52,7 +65,7 @@
             android:gravity="center_horizontal"
             android:padding="16dp"
             android:layout_below="@id/backArrow"
-            android:visibility="gone">
+            android:visibility="visible">
 
             <!-- Profile picture -->
             <ImageView
@@ -135,8 +148,37 @@
                         android:textColor="#333333"/>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
+            <ImageView
+                android:id="@+id/userTitle"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
 
-            <!-- Change Password Button -->
+                android:clipToOutline="true"
+                android:src="@drawable/level1"
+                android:scaleType="centerCrop"
+                android:layout_marginBottom="16dp"/>
+            <TextView
+                android:id="@+id/xpLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="XP Progress"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#000000"
+                android:layout_marginTop="16dp"/>
+            <ProgressBar
+                android:id="@+id/xpProgressBar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="20dp"
+                android:progress="0"
+                android:max="100"
+                android:progressTint="@android:color/holo_green_light"
+                android:backgroundTint="#DDDDDD"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp"/>
+
+            <!-- Change Password Button
             <Button
                 android:id="@+id/changePasswordBtn"
                 android:layout_width="wrap_content"
@@ -144,7 +186,7 @@
                 android:text="Change Password"
                 android:layout_marginTop="24dp"
                 android:backgroundTint="@color/my_primary"
-                android:textColor="#FFFFFF"/>
+                android:textColor="#FFFFFF"/>-->
         </LinearLayout>
     </RelativeLayout>
 </ScrollView>

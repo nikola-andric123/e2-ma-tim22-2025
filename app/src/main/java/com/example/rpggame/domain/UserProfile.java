@@ -1,6 +1,7 @@
 package com.example.rpggame.domain;
 
 import com.example.rpggame.Enums.UserTitle;
+import com.example.rpggame.Zadatak;
 import com.google.firebase.Timestamp;
 import com.google.type.DateTime;
 
@@ -78,6 +79,230 @@ public class UserProfile {
 
     public int getExperiencePoints() {
         return experiencePoints;
+    }
+
+    public void addXpPoints(Zadatak zadatak){
+        int currentLevel = 1;
+        int beginningXP;
+        int newXp = 0;
+        switch (zadatak.getBitnost()){
+
+            case NORMALAN:
+
+                beginningXP = 1;
+                if(this.level == 0){
+                    this.experiencePoints += beginningXP;
+
+                }else {
+                    while (true) {
+                        if (this.level == currentLevel) {
+                            newXp = beginningXP;
+                            for(int x=1; x<=currentLevel;x++){
+                                newXp = newXp + (int) Math.ceil(0.5 * newXp);
+                            }
+                            //int previous = (int) Math.ceil((2.0/3.0) * (currentLevel+1));
+                            //this.experiencePoints += previous + (int) Math.ceil(0.5*previous);
+                            this.experiencePoints += newXp;
+                            break;
+                        } else{
+                            currentLevel++;
+                        }
+                    }
+                }
+                break;
+            case VAZAN:
+                beginningXP = 3;
+                if(this.level == 0){
+                    this.experiencePoints += beginningXP;
+
+                }else {
+                    while (true) {
+                        if (this.level == currentLevel) {
+                            newXp = beginningXP;
+                            for(int x=1; x<=currentLevel;x++){
+                                newXp = newXp + (int) Math.ceil(0.5 * newXp);
+                            }
+                            //int previous = (int) Math.ceil((2.0/3.0) * (currentLevel+1));
+                            //this.experiencePoints += previous + (int) Math.ceil(0.5*previous);
+                            this.experiencePoints += newXp;
+                            break;
+                        } else{
+                            currentLevel++;
+                        }
+                    }
+                }
+                break;
+            case EKSTREMNO_VAZAN:
+                beginningXP = 10;
+                if(this.level == 0){
+                    this.experiencePoints += beginningXP;
+
+                }else {
+                    while (true) {
+                        if (this.level == currentLevel) {
+                            newXp = beginningXP;
+                            for(int x=1; x<=currentLevel;x++){
+                                newXp = newXp + (int) Math.ceil(0.5 * newXp);
+                            }
+                            //int previous = (int) Math.ceil((2.0/3.0) * (currentLevel+1));
+                            //this.experiencePoints += previous + (int) Math.ceil(0.5*previous);
+                            this.experiencePoints += newXp;
+                            break;
+                        } else{
+                            currentLevel++;
+                        }
+                    }
+                }
+                break;
+            case SPECIJALAN:
+                beginningXP = 100;
+                if(this.level == 0){
+                    this.experiencePoints += beginningXP;
+
+                }else {
+                    while (true) {
+                        if (this.level == currentLevel) {
+                            newXp = beginningXP;
+                            for(int x=1; x<=currentLevel;x++){
+                                newXp = newXp + (int) Math.ceil(0.5 * newXp);
+                            }
+                            //int previous = (int) Math.ceil((2.0/3.0) * (currentLevel+1));
+                            //this.experiencePoints += previous + (int) Math.ceil(0.5*previous);
+                            this.experiencePoints += newXp;
+                            break;
+                        } else{
+                            currentLevel++;
+                        }
+                    }
+                }
+                break;
+        }
+        newXp = 0;
+        currentLevel = 1;
+        switch (zadatak.getTezina()){
+
+            case VEOMA_LAK:
+
+                beginningXP = 1;
+                if(this.level == 0){
+                    this.experiencePoints += beginningXP;
+
+                }else {
+                    while (true) {
+                        if (this.level == currentLevel) {
+                            newXp = beginningXP;
+                            for(int x=1; x<=currentLevel;x++){
+                                newXp = newXp + (int) Math.ceil(0.5 * newXp);
+                            }
+                            //int previous = (int) Math.ceil((2.0/3.0) * (currentLevel+1));
+                            //this.experiencePoints += previous + (int) Math.ceil(0.5*previous);
+                            this.experiencePoints += newXp;
+                            break;
+                        } else{
+                            currentLevel++;
+                        }
+                    }
+                }
+                break;
+            case LAK:
+                beginningXP = 3;
+                if(this.level == 0){
+                    this.experiencePoints += beginningXP;
+
+                }else {
+                    while (true) {
+                        if (this.level == currentLevel) {
+                            newXp = beginningXP;
+                            for(int x=1; x<=currentLevel;x++){
+                                newXp = newXp + (int) Math.ceil(0.5 * newXp);
+                            }
+                            //int previous = (int) Math.ceil((2.0/3.0) * (currentLevel+1));
+                            //this.experiencePoints += previous + (int) Math.ceil(0.5*previous);
+                            this.experiencePoints += newXp;
+                            break;
+                        } else{
+                            currentLevel++;
+                        }
+                    }
+                }
+                break;
+            case TEZAK:
+                beginningXP = 10;
+                if(this.level == 0){
+                    this.experiencePoints += beginningXP;
+
+                }else {
+                    while (true) {
+                        if (this.level == currentLevel) {
+                            newXp = beginningXP;
+                            for(int x=1; x<=currentLevel;x++){
+                                newXp = newXp + (int) Math.ceil(0.5 * newXp);
+                            }
+                            //int previous = (int) Math.ceil((2.0/3.0) * (currentLevel+1));
+                            //this.experiencePoints += previous + (int) Math.ceil(0.5*previous);
+                            this.experiencePoints += newXp;
+                            break;
+                        } else{
+                            currentLevel++;
+                        }
+                    }
+                }
+                break;
+            case EKSTREMNO_TEZAK:
+                beginningXP = 100;
+                if(this.level == 0){
+                    this.experiencePoints += beginningXP;
+
+                }else {
+                    while (true) {
+                        if (this.level == currentLevel) {
+                            newXp = beginningXP;
+                            for(int x=1; x<=currentLevel;x++){
+                                newXp = newXp + (int) Math.ceil(0.5 * newXp);
+                            }
+                            //int previous = (int) Math.ceil((2.0/3.0) * (currentLevel+1));
+                            //this.experiencePoints += previous + (int) Math.ceil(0.5*previous);
+                            this.experiencePoints += newXp;
+                            break;
+                        } else{
+                            currentLevel++;
+                        }
+                    }
+                }
+                break;
+        }
+        //Check for level up
+        if(this.level == 0){
+            if(this.experiencePoints >= 200) {
+                this.level = 1;
+                this.powerPoints += 40;
+                this.title = UserTitle.INTERMEDIATE;
+            }
+        }else{
+            int currentPoints = 500;
+            int currentPP = 70;
+            while(true){
+                if(this.level == currentLevel){
+                    if(this.experiencePoints >= currentPoints){
+                        this.level += 1;
+                        this.powerPoints += currentPP;
+                        if(this.level == 2){
+                            this.title = UserTitle.SENIOR;
+                        } else if (this.level == 3) {
+                            this.title = UserTitle.EXPERT;
+                        }
+                        break;
+                    }else{
+                        break;
+                    }
+                }else{
+                    currentLevel++;
+                    currentPoints += (int) (Math.ceil((5.0/2.0) * (double) currentPoints/100.0) * 100);
+                    currentPP += (int) ((7.0/4.0) * currentPP);
+                }
+            }
+        }
+
     }
 
     public void setExperiencePoints(int experiencePoints) {

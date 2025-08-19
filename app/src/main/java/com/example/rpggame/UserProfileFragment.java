@@ -10,6 +10,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -32,7 +33,7 @@ public class UserProfileFragment extends Fragment {
     private UserProfile profileToShow;
     private FirebaseUser currentUser;
     private FirebaseAuth mAuth;
-    private ImageView userAvatar;
+    private ImageView userAvatar, titleImage;
     private TextView usernameText, levelText, powerPointsText, experienceText, coinsText, badgesText;
     private Button changePasswordBtn;
     private Button logoutBtn;
@@ -61,16 +62,17 @@ public class UserProfileFragment extends Fragment {
         experienceText = view.findViewById(R.id.experienceText);
         coinsText = view.findViewById(R.id.coinsText);
         badgesText = view.findViewById(R.id.badgesText);
-        changePasswordBtn = view.findViewById(R.id.changePasswordBtn);
-        logoutBtn = view.findViewById(R.id.logout);
+        titleImage = view.findViewById(R.id.userTitle);
+        //changePasswordBtn = view.findViewById(R.id.changePasswordBtn);
+        //logoutBtn = view.findViewById(R.id.logout);
         ProgressBar loadingCircle = view.findViewById(R.id.loadingCircle);
         LinearLayout profileContainer = view.findViewById(R.id.profileContainer);
 
         loadingCircle.setVisibility(View.VISIBLE);
         profileContainer.setVisibility(View.GONE);
 
-        changePasswordBtn.setOnClickListener(v -> showChangePasswordDialog());
-        logoutBtn.setOnClickListener(new View.OnClickListener() {
+        //changePasswordBtn.setOnClickListener(v -> showChangePasswordDialog());
+        /*logoutBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {  // use "v" instead of "view"
                 FirebaseAuth.getInstance().signOut();
@@ -78,6 +80,33 @@ public class UserProfileFragment extends Fragment {
                 startActivity(intent);
                 requireActivity().finish();
             }
+        });*/
+
+        ImageView menuIcon = view.findViewById(R.id.menuIcon);
+
+        menuIcon.setOnClickListener(v -> {
+            PopupMenu popup = new PopupMenu(getContext(), v);
+            popup.getMenuInflater().inflate(R.menu.user_profile_menu, popup.getMenu());
+
+            popup.setOnMenuItemClickListener(item -> {
+                int id = item.getItemId();
+
+                if (id == R.id.action_logout) {
+                    FirebaseAuth.getInstance().signOut();
+                    Intent intent = new Intent(requireContext(), LoginActivity.class);
+                    startActivity(intent);
+                    requireActivity().finish();
+                    return true;
+                } else if (id == R.id.action_change_password) {
+                    showChangePasswordDialog();
+                    //Toast.makeText(getContext(), "Change Password clicked", Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+
+                return false;
+            });
+
+            popup.show();
         });
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -86,7 +115,8 @@ public class UserProfileFragment extends Fragment {
 
         // Retrieve userId from arguments instead of getIntent()
         String userUID = requireArguments().getString("userId");
-
+        ProgressBar xpProgressBar = view.findViewById(R.id.xpProgressBar);
+        TextView xpLabel = view.findViewById(R.id.xpLabel);
         db.collection("users").document(userUID).get()
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
@@ -94,7 +124,7 @@ public class UserProfileFragment extends Fragment {
                         int avatarId = getAvatarId(profileToShow.getAvatar());
                         userAvatar.setImageResource(avatarId);
                         usernameText.setText("Username: " + profileToShow.getUsername());
-                        levelText.setText("Level: " + profileToShow.getLevel());
+                        levelText.setText("Level: " + profileToShow.getLevel() + " - " + profileToShow.getTitle());
                         powerPointsText.setText("Power points: " + profileToShow.getPowerPoints());
                         experienceText.setText("Experience points: " + profileToShow.getExperiencePoints());
                         coinsText.setText("Collected coins: " + profileToShow.getCollectedCoins());
@@ -104,6 +134,24 @@ public class UserProfileFragment extends Fragment {
                         }
                         loadingCircle.setVisibility(View.GONE);
                         profileContainer.setVisibility(View.VISIBLE);
+                        calculateXPbar(xpProgressBar, xpLabel);
+                        switch (profileToShow.getLevel()){
+                            case 0:
+                                titleImage.setImageResource(R.drawable.level0);
+                                break;
+                            case 1:
+                                titleImage.setImageResource(R.drawable.level1);
+                                break;
+                            case 2:
+                                titleImage.setImageResource(R.drawable.level2);
+                                break;
+                            case 3:
+                                titleImage.setImageResource(R.drawable.level3);
+                                break;
+                            default:
+                                titleImage.setImageResource(R.drawable.level3);
+                                break;
+                        }
                     }
                 });
 
@@ -111,8 +159,31 @@ public class UserProfileFragment extends Fragment {
         backArrow.setOnClickListener(v -> {
             requireActivity().onBackPressed(); // simple back navigation
         });
-    }
 
+
+
+
+    }
+    private void calculateXPbar(ProgressBar xpProgressBar, TextView xpLabel){
+
+
+        // Example values (replace with values from Firestore)
+        int currentXP = profileToShow.getExperiencePoints();       // user XP
+        int currentLevel = 0;
+        int requiredXP = 200; // XP needed for next level
+        while(currentLevel < profileToShow.getLevel()){
+            currentLevel ++;
+            requiredXP += (int) (Math.ceil((5.0/2.0) * (double) requiredXP/100.0) * 100);
+        }
+
+
+        // Calculate percentage
+        int progressPercent = (int) ((currentXP * 100.0f) / requiredXP);
+
+        // Update UI
+        xpProgressBar.setProgress(progressPercent);
+        xpLabel.setText("XP: " + currentXP + " / " + requiredXP);
+    }
     private void showChangePasswordDialog() {
         LayoutInflater inflater = LayoutInflater.from(requireContext());
         final View dialogView = inflater.inflate(R.layout.dialog_change_password, null);
