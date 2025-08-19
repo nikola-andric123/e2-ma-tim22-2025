@@ -13,6 +13,11 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.rpggame.domain.UserProfile;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -24,6 +29,8 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
     private Zadatak trenutniZadatak;
     private ZadatakRepository zadatakRepository;
     private ActivityResultLauncher<Intent> izmenaLauncher;
+    FirebaseAuth mAuth;
+    FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,7 +38,8 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
         setContentView(R.layout.activity_detalji_zadatka);
 
         zadatakRepository = new ZadatakRepository(getApplication());
-
+        mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
         izmenaLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -87,6 +95,28 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
         btnUradjen.setOnClickListener(v -> {
             trenutniZadatak.setStatus(Zadatak.Status.URADJEN);
             zadatakRepository.insert(trenutniZadatak);
+            FirebaseUser currentUser = mAuth.getCurrentUser();
+            db.collection("users").document(currentUser.getUid()).get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        if (documentSnapshot.exists()) {
+                            UserProfile user = documentSnapshot.toObject(UserProfile.class);
+
+                            user.addXpPoints(trenutniZadatak);
+                            db.collection("users").document(currentUser.getUid())
+                                    .set(user)
+                                    .addOnSuccessListener(aVoid -> {
+                                        Toast.makeText(this, "User updated successfully!", Toast.LENGTH_SHORT).show();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Toast.makeText(this, "Failed to update user: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    });
+                        } else {
+                            Toast.makeText(this, "No such user in db!", Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Failed to retrieve user from db!", Toast.LENGTH_SHORT).show();
+                    });
             Toast.makeText(this, "Zadatak označen kao URAĐEN!", Toast.LENGTH_SHORT).show();
             vratiRezultatNazad();
         });
