@@ -14,9 +14,6 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.rpggame.domain.UserProfile;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -27,19 +24,16 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
     private TextView txtNaziv, txtOpis, txtTezina, txtBitnost, txtVreme;
     private Button btnUradjen, btnOtkazan, btnIzmeni, btnPauzirajAktiviraj, btnObrisi;
     private Zadatak trenutniZadatak;
-    private ZadatakRepository zadatakRepository;
+    private ZadatakRepository repository; // ISPRAVKA: Deklaracija koja je nedostajala
     private ActivityResultLauncher<Intent> izmenaLauncher;
-    FirebaseAuth mAuth;
-    FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detalji_zadatka);
 
-        zadatakRepository = new ZadatakRepository(getApplication());
-        mAuth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
+        repository = new ZadatakRepository(getApplication()); // ISPRAVKA: Inicijalizacija koja je nedostajala
+
         izmenaLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -74,56 +68,35 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
         }
     }
 
-    private void popuniPodatke() {
-        if (trenutniZadatak == null) return;
-
-        setTitle("Detalji: " + trenutniZadatak.getNaziv());
-        txtNaziv.setText(trenutniZadatak.getNaziv());
-        txtOpis.setText(trenutniZadatak.getOpis());
-        txtTezina.setText(trenutniZadatak.getTezina().toString());
-        txtBitnost.setText(trenutniZadatak.getBitnost().toString());
-        SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy 'u' HH:mm", Locale.getDefault());
-        String formatiranoVreme = sdf.format(new Date(trenutniZadatak.getDatumPocetka()));
-        txtVreme.setText(formatiranoVreme);
-
-        podesiDugmePauza();
-        // POZIVAMO NOVU METODU ZA KONTROLU SVIH DUGMADI
-        podesiStanjeDugmadi();
-    }
-
     private void postaviListenere() {
         btnUradjen.setOnClickListener(v -> {
+            btnUradjen.setEnabled(false);
             trenutniZadatak.setStatus(Zadatak.Status.URADJEN);
-            zadatakRepository.insert(trenutniZadatak);
-            FirebaseUser currentUser = mAuth.getCurrentUser();
-            db.collection("users").document(currentUser.getUid()).get()
-                    .addOnSuccessListener(documentSnapshot -> {
-                        if (documentSnapshot.exists()) {
-                            UserProfile user = documentSnapshot.toObject(UserProfile.class);
+            repository.insert(trenutniZadatak);
 
-                            user.addXpPoints(trenutniZadatak);
-                            db.collection("users").document(currentUser.getUid())
-                                    .set(user)
-                                    .addOnSuccessListener(aVoid -> {
-                                        Toast.makeText(this, "User updated successfully!", Toast.LENGTH_SHORT).show();
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        Toast.makeText(this, "Failed to update user: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                    });
-                        } else {
-                            Toast.makeText(this, "No such user in db!", Toast.LENGTH_SHORT).show();
-                        }
-                    })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(this, "Failed to retrieve user from db!", Toast.LENGTH_SHORT).show();
-                    });
-            Toast.makeText(this, "Zadatak označen kao URAĐEN!", Toast.LENGTH_SHORT).show();
-            vratiRezultatNazad();
+            repository.getUserProfile(userProfile -> {
+                if (userProfile != null) {
+                    boolean leveledUp = LevelUpHelper.addXpPointsAndCheckForLevelUp(userProfile, trenutniZadatak);
+                    repository.updateUserProfile(userProfile);
+                    Toast.makeText(this, "Zadatak označen kao URAĐEN!", Toast.LENGTH_SHORT).show();
+
+                    if (leveledUp) {
+                        Toast.makeText(this, "NOVI NIVO! Sledi borba sa bosom!", Toast.LENGTH_LONG).show();
+                        Intent intent = new Intent(DetaljiZadatkaActivity.this, BorbaActivity.class);
+                        startActivity(intent);
+                        vratiRezultatNazad();
+                    } else {
+                        vratiRezultatNazad();
+                    }
+                } else {
+                    vratiRezultatNazad();
+                }
+            });
         });
 
         btnOtkazan.setOnClickListener(v -> {
             trenutniZadatak.setStatus(Zadatak.Status.OTKAZAN);
-            zadatakRepository.insert(trenutniZadatak);
+            repository.insert(trenutniZadatak);
             Toast.makeText(this, "Zadatak označen kao OTKAZAN!", Toast.LENGTH_SHORT).show();
             vratiRezultatNazad();
         });
@@ -142,8 +115,8 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
                 trenutniZadatak.setStatus(Zadatak.Status.AKTIVAN);
                 Toast.makeText(this, "Zadatak je ponovo aktivan.", Toast.LENGTH_SHORT).show();
             }
-            zadatakRepository.insert(trenutniZadatak);
-            popuniPodatke(); // Ponovo pozivamo da bi se stanje dugmadi osvežilo
+            repository.insert(trenutniZadatak);
+            popuniPodatke();
         });
 
         btnObrisi.setOnClickListener(v -> {
@@ -151,22 +124,33 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
         });
     }
 
-    // NOVA METODA KOJA KONTROLIŠE DA LI SU DUGMAD AKTIVNA
+    private void popuniPodatke() {
+        if (trenutniZadatak == null) return;
+        setTitle("Detalji: " + trenutniZadatak.getNaziv());
+        txtNaziv.setText(trenutniZadatak.getNaziv());
+        txtOpis.setText(trenutniZadatak.getOpis());
+        txtTezina.setText(trenutniZadatak.getTezina().toString());
+        txtBitnost.setText(trenutniZadatak.getBitnost().toString());
+        SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy 'u' HH:mm", Locale.getDefault());
+        String formatiranoVreme = sdf.format(new Date(trenutniZadatak.getDatumPocetka()));
+        txtVreme.setText(formatiranoVreme);
+        podesiDugmePauza();
+        podesiStanjeDugmadi();
+    }
+
     private void podesiStanjeDugmadi() {
         Zadatak.Status status = trenutniZadatak.getStatus();
-        // Ako je status AKTIVAN ili PAUZIRAN, dugmad su aktivna
         if (status == Zadatak.Status.AKTIVAN || status == Zadatak.Status.PAUZIRAN) {
             btnUradjen.setEnabled(true);
             btnOtkazan.setEnabled(true);
             btnIzmeni.setEnabled(true);
             btnObrisi.setEnabled(true);
-        } else { // U suprotnom (URAĐEN, OTKAZAN, NEURAĐEN), dugmad su neaktivna
+        } else {
             btnUradjen.setEnabled(false);
             btnOtkazan.setEnabled(false);
             btnIzmeni.setEnabled(false);
             btnObrisi.setEnabled(false);
         }
-        // Dugme za pauzu ima svoju posebnu logiku
         podesiDugmePauza();
     }
 
@@ -175,7 +159,7 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
                 .setTitle("Potvrda brisanja")
                 .setMessage("Da li ste sigurni da želite da trajno obrišete ovaj zadatak?")
                 .setPositiveButton("Obriši", (dialog, which) -> {
-                    zadatakRepository.delete(trenutniZadatak);
+                    repository.delete(trenutniZadatak);
                     Toast.makeText(this, "Zadatak obrisan.", Toast.LENGTH_SHORT).show();
                     setResult(Activity.RESULT_OK);
                     finish();
