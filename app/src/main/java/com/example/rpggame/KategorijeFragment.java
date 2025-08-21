@@ -7,9 +7,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +15,6 @@ public class KategorijeFragment extends Fragment {
     private RecyclerView recyclerView;
     private KategorijaAdapter adapter;
     private ZadatakRepository repository;
-    private FloatingActionButton fab;
     private List<Kategorija> sveKategorije = new ArrayList<>();
 
     @Override
@@ -31,17 +27,8 @@ public class KategorijeFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_kategorije, container, false);
-
         recyclerView = view.findViewById(R.id.recyclerViewKategorije);
-        fab = view.findViewById(R.id.fab_dodaj_kategoriju);
-
         setupRecyclerView();
-
-        fab.setOnClickListener(v -> {
-            // Pozivamo dijalog za dodavanje nove kategorije
-            KategorijaDialog.show(getContext(), repository, null, sveKategorije, this::loadKategorije);
-        });
-
         return view;
     }
 
@@ -55,8 +42,6 @@ public class KategorijeFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new KategorijaAdapter();
         recyclerView.setAdapter(adapter);
-
-        // Postavljamo listener na adapter za obradu klika (izmenu)
         adapter.setOnItemClickListener(kategorija -> {
             KategorijaDialog.show(getContext(), repository, kategorija, sveKategorije, this::loadKategorije);
         });
@@ -67,5 +52,11 @@ public class KategorijeFragment extends Fragment {
             sveKategorije = kategorije;
             adapter.setKategorije(kategorije);
         });
+    }
+
+    // AŽURIRANO: Metoda je sada PUBLIC
+    public void prikaziDijalogZaDodavanjeKategorije() {
+        // Pozivamo dijalog za dodavanje nove kategorije (null znači da nije edit mode)
+        KategorijaDialog.show(getContext(), repository, null, sveKategorije, this::loadKategorije);
     }
 }

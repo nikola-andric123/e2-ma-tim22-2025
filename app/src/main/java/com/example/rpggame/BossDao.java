@@ -17,4 +17,7 @@ public interface BossDao {
 
     @Query("SELECT * FROM boss_table WHERE isDefeated = 0 ORDER BY level ASC")
     List<Boss> getNeporazeniBosovi();
+
+    @Query("DELETE FROM boss_table")
+    void deleteAll();
 }

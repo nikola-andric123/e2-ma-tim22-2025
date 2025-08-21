@@ -19,17 +19,17 @@ public class ZadatakRepository {
     private ZadatakDao zadatakDao;
     private KategorijaDao kategorijaDao;
     private BossDao bossDao;
-
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
-    private Application application; // Treba nam za Toast poruke
-
+    private Application application;
     private ExecutorService executorService;
     private Handler mainThreadHandler;
 
     public interface OnTasksLoadedListener { void onTasksLoaded(List<Zadatak> zadaci); }
     public interface OnCategoriesLoadedListener { void onCategoriesLoaded(List<Kategorija> kategorije); }
     public interface OnUserProfileLoadedListener { void onProfileLoaded(UserProfile userProfile); }
+    public interface OnBossesLoadedListener { void onBossesLoaded(List<Boss> bosses); }
+    public interface OnResetCompleteListener { void onResetComplete(); }
 
     public ZadatakRepository(Application application) {
         this.application = application;
@@ -37,17 +37,20 @@ public class ZadatakRepository {
         this.zadatakDao = appDb.zadatakDao();
         this.kategorijaDao = appDb.kategorijaDao();
         this.bossDao = appDb.bossDao();
-
         this.db = FirebaseFirestore.getInstance();
         this.mAuth = FirebaseAuth.getInstance();
-
         this.executorService = Executors.newSingleThreadExecutor();
         this.mainThreadHandler = new Handler(Looper.getMainLooper());
     }
 
-    // Metode za Zadatke...
-    public void insert(Zadatak zadatak) { executorService.execute(() -> zadatakDao.insert(zadatak)); }
-    public void delete(Zadatak zadatak) { executorService.execute(() -> zadatakDao.delete(zadatak)); }
+    public void insert(Zadatak zadatak) {
+        executorService.execute(() -> zadatakDao.insert(zadatak));
+    }
+
+    public void delete(Zadatak zadatak) {
+        executorService.execute(() -> zadatakDao.delete(zadatak));
+    }
+
     public void getSveZadatke(OnTasksLoadedListener listener) {
         executorService.execute(() -> {
             final List<Zadatak> zadaci = zadatakDao.getSveZadatke();
@@ -55,8 +58,17 @@ public class ZadatakRepository {
         });
     }
 
-    // Metode za Kategorije...
-    public void insert(Kategorija kategorija) { executorService.execute(() -> kategorijaDao.insert(kategorija)); }
+    public void getZadatkeOd(long timestamp, OnTasksLoadedListener listener) {
+        executorService.execute(() -> {
+            final List<Zadatak> zadaci = zadatakDao.getZadatkeOd(timestamp);
+            mainThreadHandler.post(() -> listener.onTasksLoaded(zadaci));
+        });
+    }
+
+    public void insert(Kategorija kategorija) {
+        executorService.execute(() -> kategorijaDao.insert(kategorija));
+    }
+
     public void getSveKategorije(OnCategoriesLoadedListener listener) {
         executorService.execute(() -> {
             final List<Kategorija> kategorije = kategorijaDao.getSveKategorije();
@@ -64,10 +76,17 @@ public class ZadatakRepository {
         });
     }
 
-    // Metode za Bosove...
-    public void insert(Boss boss) { executorService.execute(() -> bossDao.insert(boss)); }
+    public void insert(Boss boss) {
+        executorService.execute(() -> bossDao.insert(boss));
+    }
 
-    // Metode za UserProfile...
+    public void getNeporazeneBosove(OnBossesLoadedListener listener) {
+        executorService.execute(() -> {
+            final List<Boss> bosovi = bossDao.getNeporazeniBosovi();
+            mainThreadHandler.post(() -> listener.onBossesLoaded(bosovi));
+        });
+    }
+
     public void getUserProfile(OnUserProfileLoadedListener listener) {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
@@ -87,20 +106,42 @@ public class ZadatakRepository {
         }
     }
 
-    // NOVA METODA ZA AŽURIRANJE PROFILA
     public void updateUserProfile(UserProfile profile) {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null && profile != null) {
             String uid = currentUser.getUid();
             db.collection("users").document(uid).set(profile)
                     .addOnSuccessListener(aVoid -> {
-                        // Uspešno sačuvano
-                        mainThreadHandler.post(() -> Toast.makeText(application, "Nagrade sačuvane!", Toast.LENGTH_SHORT).show());
+                        mainThreadHandler.post(() -> Toast.makeText(application, "Profil sačuvan!", Toast.LENGTH_SHORT).show());
                     })
                     .addOnFailureListener(e -> {
-                        // Greška pri čuvanju
-                        mainThreadHandler.post(() -> Toast.makeText(application, "Greška pri čuvanju nagrada.", Toast.LENGTH_SHORT).show());
+                        mainThreadHandler.post(() -> Toast.makeText(application, "Greška pri čuvanju profila.", Toast.LENGTH_SHORT).show());
                     });
         }
+    }
+
+    public void resetLokalnuBazu() {
+        executorService.execute(() -> {
+            zadatakDao.deleteAll();
+            kategorijaDao.deleteAll();
+            bossDao.deleteAll();
+        });
+    }
+
+    public void resetUserProfileNaPocetnoStanje(OnResetCompleteListener listener) {
+        getUserProfile(userProfile -> {
+            if (userProfile != null) {
+                userProfile.setLevel(0);
+                userProfile.setExperiencePoints(0);
+                userProfile.setPowerPoints(0);
+                userProfile.setCollectedCoins(0);
+                userProfile.setNumberOfBadges(0);
+
+                updateUserProfile(userProfile);
+                mainThreadHandler.post(listener::onResetComplete);
+            } else {
+                mainThreadHandler.post(listener::onResetComplete);
+            }
+        });
     }
 }
