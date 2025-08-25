@@ -17,6 +17,11 @@
         android:title="Kategorije"/>
 
     <item
+        android:id="@+id/nav_prodavnica"
+        android:icon="@drawable/baseline_shopping_cart_24"
+        android:title="Prodavnica"/>
+
+    <item
         android:id="@+id/nav_profil"
         android:icon="@android:drawable/ic_menu_manage"
         android:title="Profil"/>

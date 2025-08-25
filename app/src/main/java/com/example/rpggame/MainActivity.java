@@ -104,6 +104,10 @@ public class MainActivity extends AppCompatActivity {
                     selectedFragment = new UserProfileFragment();
                     fabDodajZadatak.setVisibility(View.GONE);
                     fabDodajKategoriju.setVisibility(View.GONE);
+                } else if (itemId == R.id.nav_prodavnica) {
+                    selectedFragment = new ShopFragment();
+                    fabDodajZadatak.setVisibility(View.GONE);
+                    fabDodajKategoriju.setVisibility(View.GONE);
                 }
 
                 if (selectedFragment != null && itemId == R.id.nav_profil) {
