@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.rpggame.domain.UserProfile;
@@ -31,6 +32,7 @@ public class ShopFragment extends Fragment {
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     Button oneTimePotion20, oneTimePotion40, permanentPotion5, permanentPotion10, glovesBtn, shieldBtn, bootsBtn, swordBtn, bowArrowBtn;
+
     CollectionReference inventoryRef;
 
     public ShopFragment() {
@@ -66,6 +68,7 @@ public class ShopFragment extends Fragment {
         bootsBtn = view.findViewById(R.id.btn_boots);
         swordBtn = view.findViewById(R.id.sword);
         bowArrowBtn = view.findViewById(R.id.bow_and_arrow);
+        TextView usersCoins = view.findViewById(R.id.tv_coins_count);
         String userUID = currentUser.getUid();
         db.collection("users").document(userUID).get()
                 .addOnSuccessListener(doc -> {
@@ -75,6 +78,7 @@ public class ShopFragment extends Fragment {
                     inventoryRef = db.collection("users")
                             .document(currentUser.getUid())
                             .collection("inventory");
+                    usersCoins.setText(String.valueOf(currentUserProfile.getCollectedCoins()));
                     int price20 = getPrice(50);
                     int price40 = getPrice(70);
                     int pricePerma5 = getPrice(200);
@@ -169,13 +173,13 @@ public class ShopFragment extends Fragment {
                     }
 
                     oneTimePotion20.setOnClickListener(v -> {
-                                        // Add potion to inventory (subcollection)
-                                        Map<String, Object> potion = new HashMap<>();
-                                        potion.put("name", "OneTimePotion20");
-                                        potion.put("powerBoost", 20);
-                                        potion.put("timestamp", FieldValue.serverTimestamp());
+                        // Add potion to inventory (subcollection)
+                        Map<String, Object> potion = new HashMap<>();
+                        potion.put("name", "OneTimePotion20");
+                        potion.put("powerBoost", 20);
+                        potion.put("timestamp", FieldValue.serverTimestamp());
 
-                                        buyPotion(oneTimePotion20, potion);
+                        buyPotion(oneTimePotion20, potion);
                     });
                     oneTimePotion40.setOnClickListener(v -> {
                         // Add potion to inventory (subcollection)
