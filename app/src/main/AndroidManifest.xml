@@ -15,6 +15,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.RPGgame">
         <activity
+            android:name=".EquipmentSelectionActivity"
+            android:exported="false" />
+        <activity
             android:name=".BorbaActivity"
             android:exported="false" />
         <activity

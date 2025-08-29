@@ -175,8 +175,10 @@ public class ShopFragment extends Fragment {
                     oneTimePotion20.setOnClickListener(v -> {
                         // Add potion to inventory (subcollection)
                         Map<String, Object> potion = new HashMap<>();
-                        potion.put("name", "OneTimePotion20");
+                        potion.put("name", "Red Potion");
+                        potion.put("category", "potion");
                         potion.put("powerBoost", 20);
+                        potion.put("durability", "oneTime");
                         potion.put("timestamp", FieldValue.serverTimestamp());
 
                         buyPotion(oneTimePotion20, potion);
@@ -184,8 +186,11 @@ public class ShopFragment extends Fragment {
                     oneTimePotion40.setOnClickListener(v -> {
                         // Add potion to inventory (subcollection)
                         Map<String, Object> potion = new HashMap<>();
-                        potion.put("name", "OneTimePotion40");
+                        potion.put("name", "Purple Potion");
+                        potion.put("category", "potion");
+
                         potion.put("powerBoost", 40);
+                        potion.put("durability", "oneTime");
                         potion.put("timestamp", FieldValue.serverTimestamp());
 
                         buyPotion(oneTimePotion40, potion);
@@ -194,7 +199,9 @@ public class ShopFragment extends Fragment {
                         // Add potion to inventory (subcollection)
                         Map<String, Object> potion = new HashMap<>();
                         potion.put("name", "PermanentPotion5");
+                        potion.put("category", "potion");
                         potion.put("powerBoost", 5);
+                        potion.put("durability", "infinite");
                         potion.put("timestamp", FieldValue.serverTimestamp());
 
                         buyPotion(permanentPotion5, potion);
@@ -203,7 +210,10 @@ public class ShopFragment extends Fragment {
                         // Add potion to inventory (subcollection)
                         Map<String, Object> potion = new HashMap<>();
                         potion.put("name", "PermanentPotion10");
+                        potion.put("category", "potion");
                         potion.put("powerBoost", 10);
+                        potion.put("durability", "infinite");
+
                         potion.put("timestamp", FieldValue.serverTimestamp());
 
                         buyPotion(permanentPotion10, potion);
@@ -212,6 +222,7 @@ public class ShopFragment extends Fragment {
                         // Add equipment to inventory (subcollection)
                         Map<String, Object> gloves = new HashMap<>();
                         gloves.put("name", "Gloves");
+                        gloves.put("category", "clothes");
                         gloves.put("powerBoost", 10);
                         gloves.put("durability", 2);
                         gloves.put("timestamp", FieldValue.serverTimestamp());
@@ -222,6 +233,7 @@ public class ShopFragment extends Fragment {
                         // Add equipment to inventory (subcollection)
                         Map<String, Object> shield = new HashMap<>();
                         shield.put("name", "Shield");
+                        shield.put("category", "clothes");
                         shield.put("hitSuccessIncrease", 10);
                         shield.put("durability", 2);
                         shield.put("timestamp", FieldValue.serverTimestamp());
@@ -232,6 +244,7 @@ public class ShopFragment extends Fragment {
                         // Add equipment to inventory (subcollection)
                         Map<String, Object> boots = new HashMap<>();
                         boots.put("name", "Boots");
+                        boots.put("category", "clothes");
                         boots.put("oneExtraHitChance", 40);
                         boots.put("durability", 2);
                         boots.put("timestamp", FieldValue.serverTimestamp());

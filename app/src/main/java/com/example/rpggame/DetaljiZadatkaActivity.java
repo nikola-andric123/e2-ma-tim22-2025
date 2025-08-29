@@ -82,8 +82,9 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
 
                     if (leveledUp) {
                         Toast.makeText(this, "NOVI NIVO! Sledi borba sa bosom!", Toast.LENGTH_LONG).show();
-                        Intent intent = new Intent(DetaljiZadatkaActivity.this, BorbaActivity.class);
+                        Intent intent = new Intent(DetaljiZadatkaActivity.this, EquipmentSelectionActivity.class);
                         startActivity(intent);
+                        finish();
                         vratiRezultatNazad();
                     } else {
                         vratiRezultatNazad();

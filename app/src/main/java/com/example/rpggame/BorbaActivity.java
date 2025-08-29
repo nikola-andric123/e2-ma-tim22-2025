@@ -40,8 +40,8 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
     private UserProfile trenutniKorisnik;
     private Boss trenutniBoss;
 
-    private int maxHpBosa, trenutniHpBosa, sansaZaPogodak;
-    private int preostaliNapadi = 5;
+    private int maxHpBosa, trenutniHpBosa, sansaZaPogodak; //TO DO: Sansu za uspesan pogodat treba povecati (10% ako ima vise komada onda 10+10+...%) ukoliko korisnik ima aktiviran Shield
+    private int preostaliNapadi = 5; //TO DO: Ukoliko korisnik ima aktivirane Cizme, onda ima 40% sanse za dobijanje 1 dodatnog napada po paru aktivnih cizama
 
     private SensorManager sensorManager;
     private Sensor accelerometer;
@@ -291,7 +291,7 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
     }
 
     private int izracunajNovcice(int nivoKorisnika) {
-        if (nivoKorisnika <= 0) nivoKorisnika = 1;
+        if (nivoKorisnika <= 0) nivoKorisnika = 1; // TO DO: Ako korisnik ima aktivirani Luk i strelu onda se broj osvojenih coins-a povecava za procenat tog oruzja
         if (nivoKorisnika == 1) return 200;
         double novcici = 200;
         for (int i = 2; i <= nivoKorisnika; i++) {
