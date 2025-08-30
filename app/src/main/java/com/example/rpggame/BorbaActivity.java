@@ -9,6 +9,7 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -23,8 +24,16 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.airbnb.lottie.LottieAnimationView;
+import com.example.rpggame.domain.BowAndArrow;
+import com.example.rpggame.domain.Item;
+import com.example.rpggame.domain.Potion;
 import com.example.rpggame.domain.UserProfile;
+import com.example.rpggame.helper.ItemFactory;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -48,7 +57,9 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
     private boolean isFightShakeListenerActive = false;
     private boolean isRewardShakeListenerActive = false;
     private boolean napadUToku = false;
+    private FirebaseFirestore db;
     private AlertDialog rewardsDialog;
+    private List<Item> inventoryItems;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +74,37 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
         sansaNapadaText = findViewById(R.id.sansa_napada_text);
         hpBosaBar = findViewById(R.id.hp_bosa_bar);
         dugmeNapad = findViewById(R.id.dugme_napad);
+        db = FirebaseFirestore.getInstance();
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        inventoryItems = new ArrayList<Item>();
+
+
+        ArrayList<String> addedPowersIds = getIntent().getStringArrayListExtra("addedPowersIds");
+        if (addedPowersIds != null && !addedPowersIds.isEmpty()) {
+            for (String id : addedPowersIds) {
+                db.collection("users")
+                        .document(currentUser.getUid())
+                        .collection("addedPowers")
+                        .document(id)
+                        .get()
+                        .addOnSuccessListener(doc -> {
+                            if (doc.exists()) {
+                                Item item = ItemFactory.fromDocument(doc);
+                                if (item != null) {
+                                    Log.d("BorbaActivity", "Loaded: " + item.getName() + " (" + item.getClass().getSimpleName() + ")");
+                                    inventoryItems.add(item);
+                                    if(item instanceof Potion){
+
+                                    }
+
+                                }
+                            }
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("BorbaActivity", "Failed to load power with ID: " + id, e);
+                        });
+            }
+        }
 
         dugmeNapad.setEnabled(true);
         dugmeNapad.setText("NAPAD!");
@@ -296,6 +338,14 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
         double novcici = 200;
         for (int i = 2; i <= nivoKorisnika; i++) {
             novcici *= 1.20;
+        }
+        for (Item item : inventoryItems) {
+            if (item instanceof BowAndArrow) {
+                BowAndArrow bow = (BowAndArrow) item;
+                double bonus = bow.getCoinsPercentIncrease();
+                novcici += novcici * bonus;
+                break;
+            }
         }
         return (int) Math.round(novcici);
     }
