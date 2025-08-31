@@ -5,8 +5,8 @@ public class Shield extends Clothes {
 
     public Shield() { super(); }
 
-    public Shield(String id, String name, double hitSuccessIncrease) {
-        super(id, name);
+    public Shield(String id, String name, double hitSuccessIncrease, String status) {
+        super(id, name, status);
         this.hitSuccessIncrease = hitSuccessIncrease;
     }
 

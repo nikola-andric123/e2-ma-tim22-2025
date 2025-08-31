@@ -5,8 +5,8 @@ public class Gloves extends Clothes {
 
     public Gloves() { super(); }
 
-    public Gloves(String id, String name, int powerIncrease) {
-        super(id, name);
+    public Gloves(String id, String name, int powerIncrease, String status) {
+        super(id, name, status);
         this.powerIncrease = powerIncrease;
     }
 

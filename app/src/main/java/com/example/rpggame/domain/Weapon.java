@@ -6,8 +6,8 @@ public abstract class Weapon extends Item {
         this.category = "weapon";
     }
 
-    public Weapon(String id, String name) {
-        super(id, name, "weapon");
+    public Weapon(String id, String name, String status) {
+        super(id, name, "weapon", status);
     }
 }
 

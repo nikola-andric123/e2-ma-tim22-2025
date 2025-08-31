@@ -18,24 +18,30 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import java.util.Random;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.airbnb.lottie.LottieAnimationView;
+import com.example.rpggame.domain.Boots;
 import com.example.rpggame.domain.BowAndArrow;
 import com.example.rpggame.domain.Item;
 import com.example.rpggame.domain.Potion;
+import com.example.rpggame.domain.Shield;
 import com.example.rpggame.domain.UserProfile;
 import com.example.rpggame.helper.ItemFactory;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Consumer;
 
 public class BorbaActivity extends AppCompatActivity implements SensorEventListener {
 
@@ -49,7 +55,7 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
     private UserProfile trenutniKorisnik;
     private Boss trenutniBoss;
 
-    private int maxHpBosa, trenutniHpBosa, sansaZaPogodak; //TO DO: Sansu za uspesan pogodat treba povecati (10% ako ima vise komada onda 10+10+...%) ukoliko korisnik ima aktiviran Shield
+    private int maxHpBosa, trenutniHpBosa, sansaZaPogodak; //TO DO: Sansu za uspesan pogodak treba povecati (10% ako ima vise komada onda 10+10+...%) ukoliko korisnik ima aktiviran Shield
     private int preostaliNapadi = 5; //TO DO: Ukoliko korisnik ima aktivirane Cizme, onda ima 40% sanse za dobijanje 1 dodatnog napada po paru aktivnih cizama
 
     private SensorManager sensorManager;
@@ -60,6 +66,12 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
     private FirebaseFirestore db;
     private AlertDialog rewardsDialog;
     private List<Item> inventoryItems;
+    private double coinsWonIncreasePercent;
+    private double hitSuccessIncreaseChance;
+    private double hitNumberIncreaseChance;
+    FirebaseUser currentUser;
+    private Random random;
+    private double addedPowersAmount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,37 +86,75 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
         sansaNapadaText = findViewById(R.id.sansa_napada_text);
         hpBosaBar = findViewById(R.id.hp_bosa_bar);
         dugmeNapad = findViewById(R.id.dugme_napad);
+        random = new Random();
         db = FirebaseFirestore.getInstance();
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
         inventoryItems = new ArrayList<Item>();
 
 
+        coinsWonIncreasePercent = 0.0;
+        hitSuccessIncreaseChance = 0.0;
+        hitNumberIncreaseChance = 0.0;
+
+
         ArrayList<String> addedPowersIds = getIntent().getStringArrayListExtra("addedPowersIds");
-        if (addedPowersIds != null && !addedPowersIds.isEmpty()) {
-            for (String id : addedPowersIds) {
-                db.collection("users")
-                        .document(currentUser.getUid())
-                        .collection("addedPowers")
-                        .document(id)
-                        .get()
-                        .addOnSuccessListener(doc -> {
-                            if (doc.exists()) {
-                                Item item = ItemFactory.fromDocument(doc);
-                                if (item != null) {
-                                    Log.d("BorbaActivity", "Loaded: " + item.getName() + " (" + item.getClass().getSimpleName() + ")");
-                                    inventoryItems.add(item);
-                                    if(item instanceof Potion){
+        addedPowersAmount = getIntent().getDoubleExtra("addedPowersAmount", 0.0);
+        ucitajPodatkeKorisnika(
+                user -> {
 
-                                    }
+                    trenutniKorisnik = user;
+                    trenutniKorisnik.setPowerPoints(trenutniKorisnik.getPowerPoints() + (int) addedPowersAmount);
+                    ucitajZadatkeZaRacunanjeSanse();
+                },
+                e -> {
 
+                    Toast.makeText(this, "Greška: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    finish();
+                }
+        );
+
+
+
+                            if (addedPowersIds != null && !addedPowersIds.isEmpty()) {
+                                for (String id : addedPowersIds) {
+                                    db.collection("users")
+                                            .document(currentUser.getUid())
+                                            .collection("addedPowers")
+                                            .document(id)
+                                            .get()
+                                            .addOnSuccessListener(doc -> {
+                                                if (doc.exists()) {
+                                                    Item item = ItemFactory.fromDocument(doc);
+                                                    if (item != null) {
+                                                        Log.d("BorbaActivity", "Loaded: " + item.getName() + " (" + item.getClass().getSimpleName() + ")");
+                                                        inventoryItems.add(item);
+                                                        if (item instanceof BowAndArrow) {
+                                                            BowAndArrow bow = (BowAndArrow) item;
+                                                            coinsWonIncreasePercent = bow.getCoinsPercentIncrease();
+
+                                                        } else if (item instanceof Shield) {
+                                                            Shield shield = (Shield) item;
+                                                            hitSuccessIncreaseChance = shield.getHitSuccessIncrease();
+                                                            sansaZaPogodak += (int) (((double) sansaZaPogodak) * hitSuccessIncreaseChance);
+                                                        } else if (item instanceof Boots) {
+                                                            Boots boots = (Boots) item;
+                                                            hitNumberIncreaseChance = boots.getAttackChanceIncrease();
+                                                            if (random.nextDouble() < hitNumberIncreaseChance) {
+                                                                preostaliNapadi += 1; // Add the bonus attack
+                                                            }
+
+
+                                                        }
+
+                                                    }
+                                                }
+                                            })
+                                            .addOnFailureListener(e -> {
+                                                Log.e("BorbaActivity", "Failed to load power with ID: " + id, e);
+                                            });
                                 }
                             }
-                        })
-                        .addOnFailureListener(e -> {
-                            Log.e("BorbaActivity", "Failed to load power with ID: " + id, e);
-                        });
-            }
-        }
+
 
         dugmeNapad.setEnabled(true);
         dugmeNapad.setText("NAPAD!");
@@ -115,7 +165,7 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
             accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         }
 
-        ucitajPodatkeKorisnika();
+
         dugmeNapad.setOnClickListener(v -> pokusajNapad());
     }
 
@@ -175,17 +225,22 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
         }
     }
 
-    private void ucitajPodatkeKorisnika() {
-        repository.getUserProfile(userProfile -> {
-            if (userProfile != null) {
-                this.trenutniKorisnik = userProfile;
-                this.trenutniKorisnik.setPowerPoints(150);
-                ucitajZadatkeZaRacunanjeSanse();
-            } else {
-                Toast.makeText(this, "Greška: Nije moguće učitati profil korisnika.", Toast.LENGTH_LONG).show();
-                finish();
-            }
-        });
+    private void ucitajPodatkeKorisnika(Consumer<UserProfile> onSuccess, Consumer<Exception> onError) {
+        //repository.getUserProfile(userProfile -> {
+        db.collection("users").document(currentUser.getUid()).get()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists()) {
+                        UserProfile user = doc.toObject(UserProfile.class);
+                        if (user != null) {
+                            onSuccess.accept(user);
+                        } else {
+                            onError.accept(new Exception("User profile is null"));
+                        }
+                    } else {
+                        onError.accept(new Exception("User document does not exist"));
+                    }
+                })
+                .addOnFailureListener(onError::accept);
     }
 
     private void ucitajZadatkeZaRacunanjeSanse() {
@@ -218,6 +273,27 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
         isFightShakeListenerActive = false;
         dugmeNapad.setEnabled(false);
         dugmeNapad.setText("BORBA ZAVRŠENA");
+        //Izbrisi sve upotrebljene iteme za ovu borbu
+        db.collection("users")
+                .document(currentUser.getUid())
+                .collection("addedPowers").get()
+                .addOnSuccessListener(querySnapshot -> {
+                    WriteBatch batch = db.batch();
+                    for (DocumentSnapshot doc : querySnapshot) {
+                        batch.delete(doc.getReference());
+                    }
+
+                    batch.commit()
+                            .addOnSuccessListener(aVoid -> {
+                                Toast.makeText(this, "All powers deleted!", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(this, "Failed to delete powers: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Error loading addedPowers: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
 
         if (pobeda) {
             trenutniBoss.setDefeated(true);
@@ -262,6 +338,7 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
         }
 
         trenutniKorisnik.setCollectedCoins(trenutniKorisnik.getCollectedCoins() + dobijeniNovcici);
+        trenutniKorisnik.setPowerPoints(trenutniKorisnik.getPowerPoints() - (int) addedPowersAmount);
         repository.updateUserProfile(trenutniKorisnik);
 
         builder.setPositiveButton("Zatvori", (dialog, which) -> finish());
@@ -339,14 +416,7 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
         for (int i = 2; i <= nivoKorisnika; i++) {
             novcici *= 1.20;
         }
-        for (Item item : inventoryItems) {
-            if (item instanceof BowAndArrow) {
-                BowAndArrow bow = (BowAndArrow) item;
-                double bonus = bow.getCoinsPercentIncrease();
-                novcici += novcici * bonus;
-                break;
-            }
-        }
+        novcici += novcici * coinsWonIncreasePercent;
         return (int) Math.round(novcici);
     }
 

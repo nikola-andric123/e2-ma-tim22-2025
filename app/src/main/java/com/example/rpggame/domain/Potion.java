@@ -4,13 +4,14 @@ public class Potion extends Item {
     private int strength;
     private String durability; // "oneTime" or "infinite"
 
+
     public Potion() {
         super();
         this.category = "potion";
     }
 
-    public Potion(String id, String name, int strength, String durability) {
-        super(id, name, "potion");
+    public Potion(String id, String name, int strength, String durability, String status) {
+        super(id, name, "potion", status);
         this.strength = strength;
         this.durability = durability;
     }

@@ -63,34 +63,41 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
         layoutPotions = findViewById(R.id.layout_potions);
         layoutClothes = findViewById(R.id.layout_clothes);
         btnContinue = findViewById(R.id.btn_continue_to_battle);
+        addedPowersIds = new ArrayList<>();
         addedPowerAmount = 0.0;
-
+        addedPowersRef = db.collection("users")
+                .document(currentUser.getUid())
+                .collection("addedPowers");
+        inventoryRef = db.collection("users")
+                .document(currentUser.getUid())
+                .collection("inventory");
         db.collection("users").document(userUID).get()
                 .addOnSuccessListener(doc -> {
                             if (doc.exists()) {
                                 currentUserProfile = doc.toObject(UserProfile.class);
                             }
-                            addedPowersRef = db.collection("users")
-                                    .document(currentUser.getUid())
-                                    .collection("addedPowers");
-                            inventoryRef = db.collection("users")
-                                    .document(currentUser.getUid())
-                                    .collection("inventory");
+
                     loadWeapons();
                     loadPotions();
                     loadClothes();
-                    db.collection("users").document(userUID)
-                            .update("powerPoints", currentUserProfile.getPowerPoints())
-                            .addOnSuccessListener(aVoid -> {
-                                Log.d("Firestore", "powerPoints updated!");
-                                Intent bossFightActivity = new Intent(EquipmentSelectionActivity.this, BorbaActivity.class);
-                                bossFightActivity.putStringArrayListExtra("addedPowersIds", new ArrayList<>(addedPowersIds));
-                                startActivity(bossFightActivity);
-                                finish();
-                            })
-                            .addOnFailureListener(e -> {
-                                Log.e("Firestore", "Error updating powerPoints", e);
-                            });
+                    btnContinue.setOnClickListener(v -> {
+                        db.collection("users").document(userUID)
+                                .update("powerPoints", currentUserProfile.getPowerPoints())
+                                .addOnSuccessListener(aVoid -> {
+                                    Log.d("Firestore", "powerPoints updated!");
+
+                                    Intent bossFightActivity = new Intent(EquipmentSelectionActivity.this, BorbaActivity.class);
+                                    bossFightActivity.putStringArrayListExtra("addedPowersIds", new ArrayList<>(addedPowersIds));
+                                    bossFightActivity.putExtra("addedPowersAmount", addedPowerAmount);
+                                    startActivity(bossFightActivity);
+                                    finish();
+
+
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e("Firestore", "Error updating powerPoints", e);
+                                });
+                    });
 
                 })
                 .addOnFailureListener(e -> {
@@ -109,7 +116,7 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                     for (DocumentSnapshot doc : querySnapshot) {
                         String weaponId = doc.getId();
                         String weaponName = doc.getString("name");
-                        String status = doc.getString("status");//used or notUsed
+                        String status = doc.contains("status") ? doc.getString("status") : "notUsed";//used or notUsed
                         Number coinsIncreasePercent;
                         Number powerIncreasePercent;
                         if(weaponName.equals("bowAndArrow")){
@@ -147,6 +154,8 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                         }
                         btn.setOnClickListener(v -> {
                             //selectedWeaponId = weaponId;
+                            btn.setEnabled(false);            // disable the button
+                            btn.setText("Used");
                             Map<String, Object> weapon = new HashMap<>();
                             weapon.put("name", weaponName);
                             weapon.put("category", "weapon");
@@ -190,13 +199,13 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                     for (DocumentSnapshot doc : querySnapshot) {
                         String potionId = doc.getId();
                         String potionName = doc.getString("name");
-                        String potionDurability = doc.getString("durability");
+                        String potionDurability = doc.contains("durability") ? doc.getString("durability") : "oneTime";
                         Double powerBoost = doc.getDouble("powerBoost");
-                        String status = doc.getString("status");//used or notUsed
+                        String status = doc.contains("status") ? doc.getString("status") : "notUsed";//used or notUsed
 
                         Button btn = new Button(this);
 
-                        if(status.equals("used")){
+                        if(status != null && status.equals("used")){
                             btn.setEnabled(false);
                             btn.setText("Used");
                         }else{
@@ -204,6 +213,8 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                         }
                         btn.setOnClickListener(v -> {
                             //selectedWeaponId = weaponId;
+                            btn.setEnabled(false);            // disable the button
+                            btn.setText("Used");
                             Map<String, Object> potion = new HashMap<>();
                             potion.put("name", potionName);
                             potion.put("category", "potion");
@@ -226,8 +237,12 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                             Toast.makeText(this, potionName + " selected!", Toast.LENGTH_SHORT).show();
                         });
 
-                        layoutWeapons.addView(btn);
+                        layoutPotions.addView(btn);
                     }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to load potions from inventory: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Log.e("Firestore", "Error loading inventory potions", e);
                 });
     }
 
@@ -238,12 +253,12 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                     for (DocumentSnapshot doc : querySnapshot) {
                         String clothesId = doc.getId();
                         String clothesName = doc.getString("name");
-                        String status = doc.getString("status");//used or notUsed
+                        String status = doc.contains("status") ? doc.getString("status") : "notUsed";//used or notUsed
 
                         Number powerBoost = null;
                         Number hitSuccessIncrease = null;
                         Number oneExtraHitChance = null;
-                        Number durability = doc.getDouble("durability");
+                        Number durability = doc.contains("durability") ? doc.getDouble("durability") : Double.valueOf(2.0);
                         if (clothesName.equals("gloves")) {
                             powerBoost = (Number) doc.getDouble("powerBoost");
                         } else if (clothesName.equals("shield")) {
@@ -300,6 +315,8 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
 
                         btn.setOnClickListener(v -> {
                             //selectedWeaponId = weaponId;
+                            btn.setEnabled(false);            // disable the button
+                            btn.setText("Used");
                             Map<String, Object> clothes = new HashMap<>();
                             clothes.put("name", clothesName);
                             clothes.put("category", "clothes");
@@ -317,13 +334,10 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                             inventoryRef.document(clothesId)
                                     .update("status", "used");
                             double newDurability = durability.doubleValue() - 1.0;
-                            if (newDurability > 0) {
-                                inventoryRef.document(clothesId)
-                                        .update("durability", newDurability);
-                            } else {
-                                inventoryRef.document(clothesId)
-                                        .delete();
-                            }
+
+                            inventoryRef.document(clothesId)
+                                    .update("durability", newDurability);
+
                             if(!clothesName.equals("gloves")) {
                                 addedPowersRef.add(clothes)
                                         .addOnSuccessListener(docRef -> {
@@ -339,7 +353,7 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                             Toast.makeText(this, clothesName + " selected!", Toast.LENGTH_SHORT).show();
                         });
 
-                        layoutWeapons.addView(btn);
+                        layoutClothes.addView(btn);
                     }
                 });
     }
