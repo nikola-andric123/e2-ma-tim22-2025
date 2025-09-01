@@ -198,7 +198,7 @@ public class ShopFragment extends Fragment {
                     permanentPotion5.setOnClickListener(v -> {
                         // Add potion to inventory (subcollection)
                         Map<String, Object> potion = new HashMap<>();
-                        potion.put("name", "PermanentPotion5");
+                        potion.put("name", "Wine Potion");
                         potion.put("category", "potion");
                         potion.put("powerBoost", 5);
                         potion.put("durability", "infinite");
@@ -209,7 +209,7 @@ public class ShopFragment extends Fragment {
                     permanentPotion10.setOnClickListener(v -> {
                         // Add potion to inventory (subcollection)
                         Map<String, Object> potion = new HashMap<>();
-                        potion.put("name", "PermanentPotion10");
+                        potion.put("name", "Yellow Potion");
                         potion.put("category", "potion");
                         potion.put("powerBoost", 10);
                         potion.put("durability", "infinite");
@@ -227,7 +227,7 @@ public class ShopFragment extends Fragment {
                         gloves.put("durability", 2);
                         gloves.put("timestamp", FieldValue.serverTimestamp());
 
-                        buyPotion(permanentPotion10, gloves);
+                        buyPotion(glovesBtn, gloves);
                     });
                     shieldBtn.setOnClickListener(v -> {
                         // Add equipment to inventory (subcollection)
@@ -238,7 +238,7 @@ public class ShopFragment extends Fragment {
                         shield.put("durability", 2);
                         shield.put("timestamp", FieldValue.serverTimestamp());
 
-                        buyPotion(permanentPotion10, shield);
+                        buyPotion(shieldBtn, shield);
                     });
                     bootsBtn.setOnClickListener(v -> {
                         // Add equipment to inventory (subcollection)
@@ -259,12 +259,12 @@ public class ShopFragment extends Fragment {
                                 .get()
                                 .addOnSuccessListener(swordDoc -> {
                                     if (swordDoc.exists()) {
-                                        Double currentPower = swordDoc.getDouble("powerIncrease");
+                                        Double currentPower = swordDoc.getDouble("powerIncreasePercent");
                                         if (currentPower == null) currentPower = 0.0;
 
                                         double newPower = currentPower + 0.01;
 
-                                        upgradeWeapon("sword","powerIncrease", newPower, userUID);
+                                        upgradeWeapon("sword","powerIncreasePercent", newPower, userUID);
                                     } else {
                                         Toast.makeText(getContext(),
                                                 "You don’t have a sword to upgrade!",
@@ -279,12 +279,12 @@ public class ShopFragment extends Fragment {
                                 .get()
                                 .addOnSuccessListener(swordDoc -> {
                                     if (swordDoc.exists()) {
-                                        Double currentLoot = swordDoc.getDouble("lootIncrease");
+                                        Double currentLoot = swordDoc.getDouble("lootIncreasePercent");
                                         if (currentLoot == null) currentLoot = 0.0;
 
                                         double newLoot = currentLoot + 0.01;
 
-                                        upgradeWeapon("bow_and_arrow","lootIncrease", newLoot, userUID);
+                                        upgradeWeapon("bow_and_arrow","lootIncreasePercent", newLoot, userUID);
                                     } else {
                                         Toast.makeText(getContext(),
                                                 "You don’t have a bow to upgrade!",

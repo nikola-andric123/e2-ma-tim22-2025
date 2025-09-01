@@ -14,8 +14,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -41,6 +44,7 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
 
 
     private LinearLayout layoutWeapons, layoutPotions, layoutClothes;
+    private TextView usersPowerPoints;
     private FirebaseUser currentUser;
     private UserProfile currentUserProfile;
     private FirebaseAuth mAuth;
@@ -63,6 +67,7 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
         layoutPotions = findViewById(R.id.layout_potions);
         layoutClothes = findViewById(R.id.layout_clothes);
         btnContinue = findViewById(R.id.btn_continue_to_battle);
+        usersPowerPoints = findViewById(R.id.users_power_points);
         addedPowersIds = new ArrayList<>();
         addedPowerAmount = 0.0;
         addedPowersRef = db.collection("users")
@@ -76,7 +81,7 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                             if (doc.exists()) {
                                 currentUserProfile = doc.toObject(UserProfile.class);
                             }
-
+                    usersPowerPoints.setText(currentUserProfile.getPowerPoints());
                     loadWeapons();
                     loadPotions();
                     loadClothes();
@@ -117,21 +122,30 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                         String weaponId = doc.getId();
                         String weaponName = doc.getString("name");
                         String status = doc.contains("status") ? doc.getString("status") : "notUsed";//used or notUsed
+                        View cardView = getLayoutInflater().inflate(R.layout.item_card, layoutWeapons, false);
+
+                        TextView itemName = cardView.findViewById(R.id.item_name);
+                        ImageView itemImage = cardView.findViewById(R.id.item_image);
+                        Button itemButton = cardView.findViewById(R.id.item_button);
+                        itemName.setText(weaponName);
+
                         Number coinsIncreasePercent;
                         Number powerIncreasePercent;
                         if(weaponName.equals("bowAndArrow")){
                             powerIncreasePercent = null;
                             coinsIncreasePercent = (Number) doc.get("coinsIncreasePercent");
+                            itemImage.setImageResource(R.drawable.bow_and_arrow);
                         }else{
                             coinsIncreasePercent = null;
                             powerIncreasePercent = (Number) doc.get("powerIncreasePercent");
+                            itemImage.setImageResource(R.drawable.sword);
                         }
 
 
-                        Button btn = new Button(this);
+
                         if(status.equals("used")){
-                            btn.setEnabled(false);
-                            btn.setText("Used");
+                            itemButton.setEnabled(false);
+                            itemButton.setText("Used");
                             if(weaponName.equals("BowAndArrow")){
                                 Map<String, Object> weapon = new HashMap<>();
                                 weapon.put("name", weaponName);
@@ -150,12 +164,12 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                                         });
                             }
                         }else{
-                            btn.setText(weaponName);
+                            itemButton.setText(weaponName);
                         }
-                        btn.setOnClickListener(v -> {
+                        itemButton.setOnClickListener(v -> {
                             //selectedWeaponId = weaponId;
-                            btn.setEnabled(false);            // disable the button
-                            btn.setText("Used");
+                            itemButton.setEnabled(false);            // disable the button
+                            itemButton.setText("Used");
                             Map<String, Object> weapon = new HashMap<>();
                             weapon.put("name", weaponName);
                             weapon.put("category", "weapon");
@@ -178,7 +192,7 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                                             Toast.makeText(this, "Failed to equip bow: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                                         });
                             }else{
-                                currentUserProfile.setPowerPoints((int) Math.ceil(currentUserProfile.getPowerPoints() * (powerIncreasePercent.doubleValue() / 100)));
+                                currentUserProfile.setPowerPoints((int) Math.ceil(currentUserProfile.getPowerPoints() + (double) currentUserProfile.getPowerPoints() * (powerIncreasePercent.doubleValue() / 100)));
 
                             }
                             inventoryRef.document(weaponId)
@@ -187,7 +201,7 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                         });
 
 
-                        layoutWeapons.addView(btn);
+                        layoutWeapons.addView(cardView);
                     }
                 });
     }
@@ -198,23 +212,40 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                 .addOnSuccessListener(querySnapshot -> {
                     for (DocumentSnapshot doc : querySnapshot) {
                         String potionId = doc.getId();
+                        View cardView = getLayoutInflater().inflate(R.layout.item_card, layoutPotions, false);
+                        TextView itemName = cardView.findViewById(R.id.item_name);
+                        ImageView itemImage = cardView.findViewById(R.id.item_image);
+                        Button itemButton = cardView.findViewById(R.id.item_button);
+
                         String potionName = doc.getString("name");
                         String potionDurability = doc.contains("durability") ? doc.getString("durability") : "oneTime";
                         Double powerBoost = doc.getDouble("powerBoost");
                         String status = doc.contains("status") ? doc.getString("status") : "notUsed";//used or notUsed
+                        itemName.setText(potionName);
+                        switch (potionName){
+                            case "Red Potion" : itemImage.setImageResource(R.drawable.red_potion); break;
+                            case "Purple Potion": itemImage.setImageResource(R.drawable.purple_potion); break;
+                            case "Wine Potion": itemImage.setImageResource(R.drawable.wine_potion); break;
+                            case "Yellow Potion": itemImage.setImageResource(R.drawable.yellow_potion); break;
+                            default:
+                                itemImage.setImageResource(R.drawable.back_arrow); // fallback
+                                break;
+                        }
+                        //itemImage.setImageResource(R.drawable.sword);
 
-                        Button btn = new Button(this);
+
+                        //Button btn = new Button(this);
 
                         if(status != null && status.equals("used")){
-                            btn.setEnabled(false);
-                            btn.setText("Used");
+                            itemButton.setEnabled(false);
+                            itemButton.setText("Used");
                         }else{
-                            btn.setText(potionName);
+                            itemButton.setText(potionName);
                         }
-                        btn.setOnClickListener(v -> {
+                        itemButton.setOnClickListener(v -> {
                             //selectedWeaponId = weaponId;
-                            btn.setEnabled(false);            // disable the button
-                            btn.setText("Used");
+                            itemButton.setEnabled(false);            // disable the button
+                            itemButton.setText("Used");
                             Map<String, Object> potion = new HashMap<>();
                             potion.put("name", potionName);
                             potion.put("category", "potion");
@@ -230,14 +261,10 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                                             inventoryRef.document(potionId)
                                                     .update("status", "used");
                                         }
-
-
-
-
                             Toast.makeText(this, potionName + " selected!", Toast.LENGTH_SHORT).show();
                         });
 
-                        layoutPotions.addView(btn);
+                        layoutPotions.addView(cardView);
                     }
                 })
                 .addOnFailureListener(e -> {
@@ -254,27 +281,35 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                         String clothesId = doc.getId();
                         String clothesName = doc.getString("name");
                         String status = doc.contains("status") ? doc.getString("status") : "notUsed";//used or notUsed
+                        View cardView = getLayoutInflater().inflate(R.layout.item_card, layoutClothes, false);
+                        TextView itemName = cardView.findViewById(R.id.item_name);
+                        ImageView itemImage = cardView.findViewById(R.id.item_image);
+                        Button itemButton = cardView.findViewById(R.id.item_button);
+                        itemName.setText(clothesName);
 
                         Number powerBoost = null;
                         Number hitSuccessIncrease = null;
                         Number oneExtraHitChance = null;
                         Number durability = doc.contains("durability") ? doc.getDouble("durability") : Double.valueOf(2.0);
-                        if (clothesName.equals("gloves")) {
+                        if (clothesName.equalsIgnoreCase("Gloves")) {
                             powerBoost = (Number) doc.getDouble("powerBoost");
-                        } else if (clothesName.equals("shield")) {
+                            itemImage.setImageResource(R.drawable.gloves);
+                        } else if (clothesName.equalsIgnoreCase("Shield")) {
                             hitSuccessIncrease = (Number) doc.getDouble("hitSuccessIncrease");
+                            itemImage.setImageResource(R.drawable.shield);
                             powerBoost = null;
                         } else {
                             oneExtraHitChance = (Number) doc.getDouble("oneExtraHitChance");
+                            itemImage.setImageResource(R.drawable.boots);
                             powerBoost = null;
                         }
 
 
 
-                        Button btn = new Button(this);
+                        //Button btn = new Button(this);
                         if(status.equals("used")){
-                            btn.setEnabled(false);
-                            btn.setText("Used");
+                            itemButton.setEnabled(false);
+                            itemButton.setText("Used");
                             if (clothesName.equals("gloves")){
 
                                 addedPowerAmount += doc.getDouble("additionalPoints");
@@ -307,26 +342,26 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                                         .delete();
                             }
                         }else{
-                            btn.setText(clothesName);
+                            itemButton.setText(clothesName);
                         }
                         Number finalPowerBoost = powerBoost;
                         Number finalOneExtraHitChance = oneExtraHitChance;
                         Number finalHitSuccessIncrease = hitSuccessIncrease;
 
-                        btn.setOnClickListener(v -> {
+                        itemButton.setOnClickListener(v -> {
                             //selectedWeaponId = weaponId;
-                            btn.setEnabled(false);            // disable the button
-                            btn.setText("Used");
+                            itemButton.setEnabled(false);            // disable the button
+                            itemButton.setText("Used");
                             Map<String, Object> clothes = new HashMap<>();
                             clothes.put("name", clothesName);
                             clothes.put("category", "clothes");
-                            if (clothesName.equals("gloves")) {
+                            if (clothesName.equals("Gloves")) {
                                 double additionalPoints = ((double)currentUserProfile.getPowerPoints())*(finalPowerBoost.doubleValue()/100);
                                 inventoryRef.document(clothesId)
                                         .update("additionalPoints", additionalPoints);
                                 addedPowerAmount += additionalPoints;
 
-                            } else if (clothesName.equals("shield")) {
+                            } else if (clothesName.equals("Shield")) {
                                 clothes.put("hitSuccessIncrease", finalHitSuccessIncrease);
                             } else {
                                 clothes.put("oneExtraHitChance", finalOneExtraHitChance);
@@ -353,7 +388,7 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                             Toast.makeText(this, clothesName + " selected!", Toast.LENGTH_SHORT).show();
                         });
 
-                        layoutClothes.addView(btn);
+                        layoutClothes.addView(cardView);
                     }
                 });
     }

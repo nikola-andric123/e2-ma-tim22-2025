@@ -18,6 +18,9 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 import androidx.annotation.NonNull;
@@ -34,7 +37,9 @@ import com.example.rpggame.domain.UserProfile;
 import com.example.rpggame.helper.ItemFactory;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.WriteBatch;
 
@@ -72,6 +77,7 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
     FirebaseUser currentUser;
     private Random random;
     private double addedPowersAmount;
+    CollectionReference inventoryRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,6 +101,10 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
         coinsWonIncreasePercent = 0.0;
         hitSuccessIncreaseChance = 0.0;
         hitNumberIncreaseChance = 0.0;
+
+        inventoryRef = db.collection("users")
+                .document(currentUser.getUid())
+                .collection("inventory");
 
 
         ArrayList<String> addedPowersIds = getIntent().getStringArrayListExtra("addedPowersIds");
@@ -326,6 +336,66 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
 
         int dobijeniNovcici = izracunajNovcice(trenutniKorisnik.getLevel());
         String dobijenaOprema = punaNagrada ? izracunajOpremu() : null;
+        if(dobijenaOprema != null){
+
+
+            switch (dobijenaOprema) {
+                case "Mač": {
+                    inventoryRef.whereEqualTo("name", "Sword")
+                            .get()
+                            .addOnSuccessListener(querySnapshot -> {
+                                if (!querySnapshot.isEmpty()) {
+                                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                                        doc.getReference().update("powersIncreasePercent", doc.getDouble("powersIncreasePercent") + 0.02) // example new value
+                                                .addOnSuccessListener(aVoid ->
+                                                        Log.d("Firestore", "Sword updated successfully"))
+                                                .addOnFailureListener(e ->
+                                                        Log.e("Firestore", "Error updating Sword", e));
+                                    }
+                                } else {
+                                    Log.d("Firestore", "No Sword found in inventory");
+                                }
+                            })
+                            .addOnFailureListener(e -> Log.e("Firestore", "Error searching inventory", e));
+                    break;
+                }
+                case "Luk i strela": {
+                    inventoryRef.whereEqualTo("name", "Sword")
+                            .get()
+                            .addOnSuccessListener(querySnapshot -> {
+                                if (!querySnapshot.isEmpty()) {
+                                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                                        doc.getReference().update("lootIncreasePercent", doc.getDouble("lootIncreasePercent") + 0.02) // example new value
+                                                .addOnSuccessListener(aVoid ->
+                                                        Log.d("Firestore", "BowAndArrow updated successfully"))
+                                                .addOnFailureListener(e ->
+                                                        Log.e("Firestore", "Error updating BowAndArrow", e));
+                                    }
+                                } else {
+                                    Log.d("Firestore", "No Sword found in inventory");
+                                }
+                            })
+                            .addOnFailureListener(e -> Log.e("Firestore", "Error searching inventory", e));
+                    break;
+                }
+                case "Rukavice": {
+                    Map<String, Object> gloves = new HashMap<>();
+                    gloves.put("name", "Gloves");
+                    gloves.put("category", "clothes");
+                    gloves.put("powerBoost", 10);
+                    gloves.put("durability", 2);
+                    gloves.put("timestamp", FieldValue.serverTimestamp());
+                    inventoryRef.add(gloves)
+                            .addOnSuccessListener(docRef -> {
+                                Toast.makeText(this, "Gloves added!", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(this, "Failed to add gloves: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
+                    break;
+                }
+            }
+        }
 
         if (!punaNagrada) {
             dobijeniNovcici /= 2;

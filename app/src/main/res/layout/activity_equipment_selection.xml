@@ -7,7 +7,34 @@
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+        <TextView
+            android:id="@+id/users_power_points_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Power points: "
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginEnd="12dp" />
+        <TextView
+            android:id="@+id/users_power_points"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="---"
+            android:textColor="@color/my_primary"
+            android:background="@drawable/rounded_text_border"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
+        <!-- Weapons Section -->
         <TextView
             android:text="Weapons"
             android:textStyle="bold"
@@ -15,12 +42,14 @@
             android:layout_marginTop="8dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
+
         <LinearLayout
             android:id="@+id/layout_weapons"
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
+        <!-- Potions Section -->
         <TextView
             android:text="Potions"
             android:textStyle="bold"
@@ -28,12 +57,14 @@
             android:layout_marginTop="8dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
+
         <LinearLayout
             android:id="@+id/layout_potions"
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
+        <!-- Clothes Section -->
         <TextView
             android:text="Clothes"
             android:textStyle="bold"
@@ -41,12 +72,14 @@
             android:layout_marginTop="8dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
+
         <LinearLayout
             android:id="@+id/layout_clothes"
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
+        <!-- Continue Button -->
         <Button
             android:id="@+id/btn_continue_to_battle"
             android:text="Continue to Battle"
