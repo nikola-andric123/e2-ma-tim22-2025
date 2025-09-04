@@ -45,6 +45,7 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
 
     private LinearLayout layoutWeapons, layoutPotions, layoutClothes;
     private TextView usersPowerPoints;
+    private TextView addedPowerPoints;
     private FirebaseUser currentUser;
     private UserProfile currentUserProfile;
     private FirebaseAuth mAuth;
@@ -66,6 +67,7 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
         layoutWeapons = findViewById(R.id.layout_weapons);
         layoutPotions = findViewById(R.id.layout_potions);
         layoutClothes = findViewById(R.id.layout_clothes);
+        addedPowerPoints = findViewById(R.id.added_power_points);
         btnContinue = findViewById(R.id.btn_continue_to_battle);
         usersPowerPoints = findViewById(R.id.users_power_points);
         addedPowersIds = new ArrayList<>();
@@ -81,7 +83,8 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                             if (doc.exists()) {
                                 currentUserProfile = doc.toObject(UserProfile.class);
                             }
-                    usersPowerPoints.setText(currentUserProfile.getPowerPoints());
+                    assert currentUserProfile != null;
+                    usersPowerPoints.setText(String.valueOf(currentUserProfile.getPowerPoints()));
                     loadWeapons();
                     loadPotions();
                     loadClothes();
@@ -187,6 +190,7 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                                             String newWeaponId = docRef.getId();
                                             addedPowersIds.add(newWeaponId);
 
+
                                         })
                                         .addOnFailureListener(e -> {
                                             Toast.makeText(this, "Failed to equip bow: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -254,10 +258,11 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
 
                                         if(potionDurability.equals("oneTime")){
                                             addedPowerAmount += currentUserProfile.getPowerPoints() * (powerBoost/100);
+                                            addedPowerPoints.setText(String.valueOf(addedPowerAmount));
                                             inventoryRef.document(potionId)
                                                     .delete();
                                         }else{
-                                            currentUserProfile.setPowerPoints((int) Math.ceil(currentUserProfile.getPowerPoints() * powerBoost));
+                                            currentUserProfile.setPowerPoints(currentUserProfile.getPowerPoints() + (int) ((double) currentUserProfile.getPowerPoints() * (powerBoost/100)));
                                             inventoryRef.document(potionId)
                                                     .update("status", "used");
                                         }
@@ -360,6 +365,7 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                                 inventoryRef.document(clothesId)
                                         .update("additionalPoints", additionalPoints);
                                 addedPowerAmount += additionalPoints;
+                                addedPowerPoints.setText(String.valueOf(addedPowerAmount));
 
                             } else if (clothesName.equals("Shield")) {
                                 clothes.put("hitSuccessIncrease", finalHitSuccessIncrease);
