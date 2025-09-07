@@ -187,6 +187,34 @@
                 android:layout_marginTop="24dp"
                 android:backgroundTint="@color/my_primary"
                 android:textColor="#FFFFFF"/>-->
+
+
+            <!-- Friends section -->
+            <TextView
+                android:id="@+id/friendsLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Friends"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginTop="32dp"
+                android:layout_marginBottom="12dp"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/friendsRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"/>
+
+            <!-- Find Friends Button -->
+            <Button
+                android:id="@+id/btnFindFriends"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Find Friends"
+                android:layout_marginTop="16dp"
+                android:backgroundTint="@color/my_primary"
+                android:textColor="#FFFFFF"/>
         </LinearLayout>
     </RelativeLayout>
 </ScrollView>

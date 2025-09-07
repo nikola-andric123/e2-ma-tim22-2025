@@ -3,6 +3,7 @@ package com.example.rpggame.activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -18,23 +19,37 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.rpggame.FriendsAdapter;
 import com.example.rpggame.R;
+import com.example.rpggame.domain.Friend;
 import com.example.rpggame.domain.UserProfile;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserProfileActivity extends AppCompatActivity {
 
     UserProfile profileToShow;
     FirebaseUser currentUser;
     FirebaseAuth mAuth;
+    private FirebaseFirestore db;
     private ImageView userAvatar;
     private TextView usernameText, levelText, powerPointsText, experienceText, coinsText, badgesText;
     private Button changePasswordBtn;
+    private RecyclerView friendsRecyclerView;
+    private String userUID;
+    private FriendsAdapter friendsAdapter;
+    private List<Friend> friendsList = new ArrayList<>();
+
 
 
     @Override
@@ -59,11 +74,11 @@ public class UserProfileActivity extends AppCompatActivity {
 
 
         changePasswordBtn.setOnClickListener(v -> showChangePasswordDialog());
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
         currentUser = mAuth.getCurrentUser();
 
-        String userUID = getIntent().getStringExtra("userId");
+        userUID = getIntent().getStringExtra("userId");
         db.collection("users").document(userUID).get()
                  .addOnSuccessListener(doc -> {
 
@@ -86,6 +101,17 @@ public class UserProfileActivity extends AppCompatActivity {
                              }
                          });
 
+        friendsRecyclerView = findViewById(R.id.friendsRecyclerView);
+        friendsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        friendsAdapter = new FriendsAdapter(this, friendsList);
+        friendsRecyclerView.setAdapter(friendsAdapter);
+
+        loadFriends();
+
+        findViewById(R.id.btnFindFriends).setOnClickListener(v -> {
+            startActivity(new Intent(UserProfileActivity.this, FindFriendsActivity.class));
+        });
+
         ImageView backArrow = findViewById(R.id.backArrow);
         backArrow.setOnClickListener(v -> {
             Intent intent = new Intent(UserProfileActivity.this, MainActivity.class);
@@ -97,6 +123,27 @@ public class UserProfileActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+    }
+
+    private void loadFriends() {
+        db.collection("users").document(userUID).collection("friends")
+                .addSnapshotListener((value, error) -> {
+                    if (error != null) {
+                        Log.e("Firestore", "Error loading friends", error);
+                        return;
+                    }
+
+                    friendsList.clear();
+                    if (value != null) {
+                        for (DocumentSnapshot doc : value.getDocuments()) {
+                            Friend friend = doc.toObject(Friend.class);
+                            if (friend != null) {
+                                friendsList.add(friend);
+                            }
+                        }
+                        friendsAdapter.notifyDataSetChanged();
+                    }
+                });
     }
 
     private void showChangePasswordDialog() {

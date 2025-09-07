@@ -3,6 +3,7 @@ package com.example.rpggame;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,25 +19,39 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.rpggame.R;
+import com.example.rpggame.activity.FindFriendsActivity;
 import com.example.rpggame.activity.LoginActivity;
+import com.example.rpggame.activity.UserProfileActivity;
+import com.example.rpggame.domain.Friend;
 import com.example.rpggame.domain.UserProfile;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserProfileFragment extends Fragment {
 
     private UserProfile profileToShow;
     private FirebaseUser currentUser;
     private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
     private ImageView userAvatar, titleImage;
     private TextView usernameText, levelText, powerPointsText, experienceText, coinsText, badgesText;
     private Button changePasswordBtn;
     private Button logoutBtn;
+    private RecyclerView friendsRecyclerView;
+    private String userUID;
+    private FriendsAdapter friendsAdapter;
+    private List<Friend> friendsList = new ArrayList<>();
 
     public UserProfileFragment() {
         // Required empty constructor
@@ -82,6 +97,18 @@ public class UserProfileFragment extends Fragment {
             }
         });*/
 
+        friendsRecyclerView = view.findViewById(R.id.friendsRecyclerView);
+        friendsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        friendsAdapter = new FriendsAdapter(getContext(), friendsList);
+        friendsRecyclerView.setAdapter(friendsAdapter);
+        db = FirebaseFirestore.getInstance();
+
+
+
+        view.findViewById(R.id.btnFindFriends).setOnClickListener(v -> {
+            startActivity(new Intent(requireContext(), FindFriendsActivity.class));
+        });
+
         ImageView menuIcon = view.findViewById(R.id.menuIcon);
 
         menuIcon.setOnClickListener(v -> {
@@ -114,7 +141,7 @@ public class UserProfileFragment extends Fragment {
         currentUser = mAuth.getCurrentUser();
 
         // Retrieve userId from arguments instead of getIntent()
-        String userUID = requireArguments().getString("userId");
+        userUID = requireArguments().getString("userId");
         ProgressBar xpProgressBar = view.findViewById(R.id.xpProgressBar);
         TextView xpLabel = view.findViewById(R.id.xpLabel);
         db.collection("users").document(userUID).get()
@@ -155,6 +182,7 @@ public class UserProfileFragment extends Fragment {
                     }
                 });
 
+        loadFriends();
         ImageView backArrow = view.findViewById(R.id.backArrow);
         backArrow.setOnClickListener(v -> {
             requireActivity().onBackPressed(); // simple back navigation
@@ -163,6 +191,27 @@ public class UserProfileFragment extends Fragment {
 
 
 
+    }
+
+    private void loadFriends() {
+        db.collection("users").document(userUID).collection("friends")
+                .addSnapshotListener((value, error) -> {
+                    if (error != null) {
+                        Log.e("Firestore", "Error loading friends");
+                        return;
+                    }
+
+                    friendsList.clear();
+                    if (value != null) {
+                        for (DocumentSnapshot doc : value.getDocuments()) {
+                            Friend friend = doc.toObject(Friend.class);
+                            if (friend != null) {
+                                friendsList.add(friend);
+                            }
+                        }
+                        friendsAdapter.notifyDataSetChanged();
+                    }
+                });
     }
     private void calculateXPbar(ProgressBar xpProgressBar, TextView xpLabel){
 
