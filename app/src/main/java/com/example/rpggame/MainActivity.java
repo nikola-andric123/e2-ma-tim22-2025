@@ -1,12 +1,19 @@
 package com.example.rpggame;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.rpggame.activity.LoginActivity;
@@ -14,6 +21,8 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -23,11 +32,20 @@ public class MainActivity extends AppCompatActivity {
     FloatingActionButton fabDodajKategoriju;
     Button dugmeReset;
     ZadatakRepository repository;
+    private static final int REQUEST_NOTIFICATION_PERMISSION = 1001;
+    private static final String TAG = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestNotificationPermission();
+        } else {
+            // For earlier versions, directly initialize FCM
+            initializeFCM();
+        }
 
         auth = FirebaseAuth.getInstance();
         user = auth.getCurrentUser();
@@ -37,6 +55,17 @@ public class MainActivity extends AppCompatActivity {
             finish();
             return;
         }
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) return;
+
+                    String token = task.getResult();
+                    FirebaseFirestore.getInstance()
+                            .collection("users")
+                            .document(FirebaseAuth.getInstance().getUid())
+                            .update("fcmToken", token);
+                });
+
 
         // --- ISPRAVKA: Svi findViewById pozivi idu ovde, na početak ---
         repository = new ZadatakRepository(getApplication());
@@ -82,6 +111,44 @@ public class MainActivity extends AppCompatActivity {
                     .show();
         });
     }
+
+    private void requestNotificationPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_NOTIFICATION_PERMISSION);
+        } else {
+            // Permission already granted
+            initializeFCM();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == REQUEST_NOTIFICATION_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted
+                initializeFCM();
+            } else {
+                // Permission denied
+                Log.e(TAG, "Notification permission denied.");
+            }
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    //for initialization of FCM TOKEN
+
+    private void initializeFCM() {
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
+                        Log.w(TAG, "Fetching FCM registration token failed", task.getException());
+                        return;
+                    }
+                    String token = task.getResult();
+                    Log.d(TAG, "FCM Token: " + token);
+                });
+    }
+
 
     private final BottomNavigationView.OnItemSelectedListener navListener =
             item -> {

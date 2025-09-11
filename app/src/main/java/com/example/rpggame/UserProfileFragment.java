@@ -24,6 +24,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.rpggame.R;
 import com.example.rpggame.activity.FindFriendsActivity;
+import com.example.rpggame.activity.FriendRequestsActivity;
 import com.example.rpggame.activity.LoginActivity;
 import com.example.rpggame.activity.UserProfileActivity;
 import com.example.rpggame.domain.Friend;
@@ -107,6 +108,10 @@ public class UserProfileFragment extends Fragment {
 
         view.findViewById(R.id.btnFindFriends).setOnClickListener(v -> {
             startActivity(new Intent(requireContext(), FindFriendsActivity.class));
+        });
+
+        view.findViewById(R.id.btnFriendRequests).setOnClickListener(v -> {
+            startActivity(new Intent(requireContext(), FriendRequestsActivity.class));
         });
 
         ImageView menuIcon = view.findViewById(R.id.menuIcon);

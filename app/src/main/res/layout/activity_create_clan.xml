@@ -1,0 +1,42 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Clan Name Input -->
+    <EditText
+        android:id="@+id/clanNameInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter Clan Name"
+        android:inputType="textPersonName"
+        android:padding="12dp"
+        android:background="@drawable/rounded_text_border"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Button to Create Clan -->
+    <Button
+        android:id="@+id/createClanBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Create Clan"
+        android:backgroundTint="@color/my_primary"
+        android:textColor="@android:color/white"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Friends List to Invite -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Invite Friends"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/friendsRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+</LinearLayout>

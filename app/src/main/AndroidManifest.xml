@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".MojaAplikacija"
@@ -14,6 +15,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.RPGgame">
+        <activity
+            android:name=".activity.CreateClanActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.FriendRequestsActivity"
+            android:exported="false" />
         <activity
             android:name=".activity.FindFriendsActivity"
             android:exported="false" />
@@ -50,6 +57,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".MyFirebaseMessagingService"
+            android:enabled="true"
+            android:exported="false"
+            >
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <receiver android:name=".ClanInviteReceiver" />
+
     </application>
 
 </manifest>

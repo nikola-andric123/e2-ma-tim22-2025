@@ -1,6 +1,7 @@
 package com.example.rpggame;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,9 +10,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.rpggame.domain.Friend;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.collection.LLRBNode;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 
 import java.util.List;
 
@@ -21,6 +27,9 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
     private Context context;
     private boolean showAddButton = false;
     private OnAddFriendClickListener listener;
+    private FirebaseFirestore db;
+    private FirebaseAuth mAuth;
+    private String currentUserUid;
 
     public interface OnAddFriendClickListener {
         void onAddFriendClick(Friend friend);
@@ -29,6 +38,9 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
     public FriendsAdapter(Context context, List<Friend> friendsList) {
         this.context = context;
         this.friendsList = friendsList;
+        db = FirebaseFirestore.getInstance();
+        mAuth = FirebaseAuth.getInstance();
+        currentUserUid = mAuth.getCurrentUser().getUid();
     }
 
     public void setShowAddButton(boolean show, OnAddFriendClickListener listener) {
@@ -53,19 +65,61 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
         if (avatarId != -1) {
             holder.avatar.setImageResource(avatarId);
         } else {
-            holder.avatar.setImageResource(R.drawable.back_arrow); // fallback
+            holder.avatar.setImageResource(R.drawable.back_arrow);
         }
 
         if (showAddButton) {
             holder.addFriendBtn.setVisibility(View.VISIBLE);
-            holder.addFriendBtn.setOnClickListener(v -> {
-                if (listener != null) {
-                    listener.onAddFriendClick(friend);
-                }
-            });
+
+            // First check if they are already friends
+            db.collection("users")
+                    .document(currentUserUid)
+                    .collection("friends")
+                    .document(friend.getUid())
+                    .get()
+                    .addOnSuccessListener(friendDoc -> {
+                        if (friendDoc.exists()) {
+                            // Already friends
+                            setButtonState(holder, "Friends", false, android.R.color.darker_gray, Color.BLACK);
+                        } else {
+                            // Not friends → check if request already sent
+                            db.collection("users")
+                                    .document(currentUserUid)
+                                    .collection("sentRequests")
+                                    .document(friend.getUid())
+                                    .get()
+                                    .addOnSuccessListener(requestDoc -> {
+                                        if (requestDoc.exists()) {
+                                            // Request already sent
+                                            setButtonState(holder, "Sent", false, android.R.color.darker_gray, Color.BLACK);
+                                        } else {
+                                            // Not friends and no request → allow add
+                                            setButtonState(holder, "Add", true, R.color.my_primary, Color.WHITE);
+
+                                            holder.addFriendBtn.setOnClickListener(v -> {
+                                                if (listener != null) {
+                                                    listener.onAddFriendClick(friend);
+                                                }
+                                                // Optimistic UI update
+                                                setButtonState(holder, "Sent", false, android.R.color.darker_gray, Color.BLACK);
+                                            });
+                                        }
+                                    });
+                        }
+                    });
+
         } else {
             holder.addFriendBtn.setVisibility(View.GONE);
         }
+    }
+
+    private void setButtonState(FriendViewHolder holder, String text, boolean enabled, int bgColorRes, int textColor) {
+        holder.addFriendBtn.setText(text);
+        holder.addFriendBtn.setEnabled(enabled);
+        holder.addFriendBtn.setBackgroundColor(
+                ContextCompat.getColor(holder.itemView.getContext(), bgColorRes)
+        );
+        holder.addFriendBtn.setTextColor(textColor);
     }
 
     @Override

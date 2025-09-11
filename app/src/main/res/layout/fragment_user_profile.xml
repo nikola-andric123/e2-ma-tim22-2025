@@ -207,14 +207,30 @@
                 android:nestedScrollingEnabled="false"/>
 
             <!-- Find Friends Button -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                >
             <Button
                 android:id="@+id/btnFindFriends"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Find Friends"
                 android:layout_marginTop="16dp"
+                android:layout_marginEnd="16dp"
                 android:backgroundTint="@color/my_primary"
                 android:textColor="#FFFFFF"/>
+
+            <Button
+                android:id="@+id/btnFriendRequests"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Friend Requests"
+                android:layout_marginTop="16dp"
+                android:backgroundTint="@color/my_primary"
+                android:textColor="#FFFFFF"/>
+        </LinearLayout>
+
         </LinearLayout>
     </RelativeLayout>
 </ScrollView>

@@ -5,6 +5,7 @@ public class Friend {
     private String username;
     private String profileImageUrl;
     private int level;
+    private boolean requestSent;
 
     public Friend() {} // Needed for Firestore
 
@@ -13,6 +14,15 @@ public class Friend {
         this.username = username;
         this.profileImageUrl = profileImageUrl;
         this.level = level;
+        this.requestSent = false;
+    }
+
+    public boolean isRequestSent() {
+        return requestSent;
+    }
+
+    public void setRequestSent(boolean requestSent) {
+        this.requestSent = requestSent;
     }
 
     public String getUid() { return uid; }

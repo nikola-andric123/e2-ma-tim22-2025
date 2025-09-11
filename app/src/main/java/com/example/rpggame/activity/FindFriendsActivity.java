@@ -86,10 +86,13 @@ public class FindFriendsActivity extends AppCompatActivity {
                             int level = doc.getLong("level") != null ? doc.getLong("level").intValue() : 0;
 
                             searchResults.add(new Friend(uid, username, profileUrl, level));
+
                         }
                     }
                     searchAdapter.notifyDataSetChanged();
                     searchAdapter.setShowAddButton(true, this::addFriend);
+
+
 
                 });
     }
@@ -111,7 +114,17 @@ public class FindFriendsActivity extends AppCompatActivity {
                 .set(request)
                 .addOnSuccessListener(aVoid ->
                         Toast.makeText(this, "Friend request sent!", Toast.LENGTH_SHORT).show()
+
                 )
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                );
+        db.collection("users")
+                .document(currentUserUid)
+                .collection("sentRequests")
+                .document(friend.getUid()) // sent request ID = receiver
+                .set(request)
+
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show()
                 );
