@@ -23,6 +23,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.rpggame.R;
+import com.example.rpggame.activity.ClanLeaderActivity;
+import com.example.rpggame.activity.ClanMemberActivity;
+import com.example.rpggame.activity.CreateClanActivity;
 import com.example.rpggame.activity.FindFriendsActivity;
 import com.example.rpggame.activity.FriendRequestsActivity;
 import com.example.rpggame.activity.LoginActivity;
@@ -38,6 +41,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class UserProfileFragment extends Fragment {
 
@@ -51,6 +55,7 @@ public class UserProfileFragment extends Fragment {
     private Button logoutBtn;
     private RecyclerView friendsRecyclerView;
     private String userUID;
+    private boolean isClanLeader = false;
     private FriendsAdapter friendsAdapter;
     private List<Friend> friendsList = new ArrayList<>();
 
@@ -114,6 +119,7 @@ public class UserProfileFragment extends Fragment {
             startActivity(new Intent(requireContext(), FriendRequestsActivity.class));
         });
 
+
         ImageView menuIcon = view.findViewById(R.id.menuIcon);
 
         menuIcon.setOnClickListener(v -> {
@@ -149,8 +155,8 @@ public class UserProfileFragment extends Fragment {
         userUID = requireArguments().getString("userId");
         ProgressBar xpProgressBar = view.findViewById(R.id.xpProgressBar);
         TextView xpLabel = view.findViewById(R.id.xpLabel);
-        db.collection("users").document(userUID).get()
-                .addOnSuccessListener(doc -> {
+        db.collection("users").document(userUID)
+                .addSnapshotListener((doc, e) -> {
                     if (doc.exists()) {
                         profileToShow = doc.toObject(UserProfile.class);
                         int avatarId = getAvatarId(profileToShow.getAvatar());
@@ -185,7 +191,37 @@ public class UserProfileFragment extends Fragment {
                                 break;
                         }
                     }
+
+                    view.findViewById(R.id.btnCreateClan).setOnClickListener(v -> {
+                        if(profileToShow.getClanId().isEmpty())
+                            startActivity(new Intent(requireContext(), CreateClanActivity.class));
+                        else {
+                            db.collection("clans").document(profileToShow.getClanId()).collection("members").document(currentUser.getUid()).get()
+                                    .addOnSuccessListener(clanMember -> {
+                                        if(clanMember.exists() && Objects.equals(clanMember.getString("role"), "leader")){
+                                            Intent intent = new Intent(requireContext(), ClanLeaderActivity.class);
+                                            intent.putExtra("clanId", profileToShow.getClanId());
+                                            db.collection("clans").document(profileToShow.getClanId()).get()
+                                                            .addOnSuccessListener(clan -> {
+                                                                intent.putExtra("clanName", clan.getString("name"));
+                                                                startActivity(intent);
+                                                            });
+
+                                        } else{
+                                            Intent intent = new Intent(requireContext(), ClanMemberActivity.class);
+                                            intent.putExtra("clanId", profileToShow.getClanId());
+                                            db.collection("clans").document(profileToShow.getClanId()).get()
+                                                    .addOnSuccessListener(clan -> {
+                                                        intent.putExtra("clanName", clan.getString("name"));
+                                                        startActivity(intent);
+                                                    });
+                                        }
+                                    });
+                        }
+                    });
                 });
+
+
 
         loadFriends();
         ImageView backArrow = view.findViewById(R.id.backArrow);

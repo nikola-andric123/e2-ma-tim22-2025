@@ -14,7 +14,14 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.RPGgame">
+        android:theme="@style/Theme.RPGgame"
+        android:usesCleartextTraffic="true">
+        <activity
+            android:name=".activity.ClanMemberActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.ClanLeaderActivity"
+            android:exported="false" />
         <activity
             android:name=".activity.CreateClanActivity"
             android:exported="false" />
@@ -57,18 +64,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <service
             android:name=".MyFirebaseMessagingService"
             android:enabled="true"
-            android:exported="false"
-            >
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
 
         <receiver android:name=".ClanInviteReceiver" />
-
     </application>
 
 </manifest>

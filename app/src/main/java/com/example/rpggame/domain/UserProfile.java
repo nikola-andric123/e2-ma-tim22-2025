@@ -18,6 +18,7 @@ public class UserProfile {
     private int numberOfBadges;
     private UserTitle title;
     private String avatar;
+    private String clanId;
     private Timestamp dateCreated;
 
     public UserProfile(){
@@ -35,6 +36,7 @@ public class UserProfile {
         this.title = title;
         this.avatar = avatar;
         this.dateCreated = dateCreated;
+        this.clanId = "";
     }
 
     public Timestamp getDateCreated() {
@@ -47,6 +49,14 @@ public class UserProfile {
 
     public String getUsername() {
         return username;
+    }
+
+    public String getClanId() {
+        return clanId;
+    }
+
+    public void setClanId(String clanId) {
+        this.clanId = clanId;
     }
 
     public void setUsername(String username) {

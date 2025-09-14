@@ -98,9 +98,14 @@ public class FriendRequestsActivity extends AppCompatActivity {
                 .set(friendData);
 
         // add current user to friend's collection
-        db.collection("users").document(friend.getUid())
-                .collection("friends").document(currentUserUid)
-                .set(friendData); // you could fetch current user profile for better info
+        db.collection("users").document(currentUserUid).get()
+                        .addOnSuccessListener(curr -> {
+                            db.collection("users").document(friend.getUid())
+                                    .collection("friends").document(currentUserUid)
+                                    .set(new Friend(currentUserUid,curr.getString("username"),
+                                            curr.getString("avatar"),curr.getLong("level").intValue()));
+                        });
+
 
         // 2. Remove the request
         db.collection("users").document(currentUserUid)

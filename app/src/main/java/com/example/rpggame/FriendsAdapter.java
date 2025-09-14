@@ -2,6 +2,7 @@ package com.example.rpggame;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +18,7 @@ import com.example.rpggame.domain.Friend;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.collection.LLRBNode;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Source;
 
 
 import java.util.List;
@@ -30,6 +32,13 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
     private String currentUserUid;
+    public enum Mode {
+        ADD_FRIEND,
+        INVITE_TO_CLAN,
+        CLAN_MEMBER
+    }
+
+    private Mode mode = Mode.ADD_FRIEND;
 
     public interface OnAddFriendClickListener {
         void onAddFriendClick(Friend friend);
@@ -46,6 +55,14 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
     public void setShowAddButton(boolean show, OnAddFriendClickListener listener) {
         this.showAddButton = show;
         this.listener = listener;
+    }
+    public void setAlreadyMemberButton() {
+        this.showAddButton = true;
+
+    }
+    public void setInviteToClan() {
+        this.showAddButton = true;
+
     }
 
     @NonNull
@@ -71,46 +88,68 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
         if (showAddButton) {
             holder.addFriendBtn.setVisibility(View.VISIBLE);
 
-            // First check if they are already friends
-            db.collection("users")
-                    .document(currentUserUid)
-                    .collection("friends")
-                    .document(friend.getUid())
-                    .get()
-                    .addOnSuccessListener(friendDoc -> {
-                        if (friendDoc.exists()) {
-                            // Already friends
-                            setButtonState(holder, "Friends", false, android.R.color.darker_gray, Color.BLACK);
-                        } else {
-                            // Not friends → check if request already sent
-                            db.collection("users")
-                                    .document(currentUserUid)
-                                    .collection("sentRequests")
-                                    .document(friend.getUid())
-                                    .get()
-                                    .addOnSuccessListener(requestDoc -> {
-                                        if (requestDoc.exists()) {
-                                            // Request already sent
-                                            setButtonState(holder, "Sent", false, android.R.color.darker_gray, Color.BLACK);
-                                        } else {
-                                            // Not friends and no request → allow add
-                                            setButtonState(holder, "Add", true, R.color.my_primary, Color.WHITE);
-
-                                            holder.addFriendBtn.setOnClickListener(v -> {
-                                                if (listener != null) {
-                                                    listener.onAddFriendClick(friend);
-                                                }
-                                                // Optimistic UI update
+            if (mode == Mode.ADD_FRIEND) {
+                // First check if they are already friends
+                db.collection("users")
+                        .document(currentUserUid)
+                        .collection("friends")
+                        .document(friend.getUid())
+                        .get()
+                        .addOnSuccessListener(friendDoc -> {
+                            if (friendDoc.exists()) {
+                                // Already friends
+                                setButtonState(holder, "Friends", false, android.R.color.darker_gray, Color.BLACK);
+                            } else {
+                                // Not friends → check if request already sent
+                                db.collection("users")
+                                        .document(currentUserUid)
+                                        .collection("sentRequests")
+                                        .document(friend.getUid())
+                                        .get(Source.SERVER)
+                                        .addOnSuccessListener(requestDoc -> {
+                                            if (requestDoc.exists()) {
+                                                // Request already sent
+                                                Log.d("DEBUG", "Doc exists: " + requestDoc.getData());
                                                 setButtonState(holder, "Sent", false, android.R.color.darker_gray, Color.BLACK);
-                                            });
-                                        }
-                                    });
-                        }
-                    });
+                                            } else {
+                                                // Not friends and no request → allow add
+                                                setButtonState(holder, "Add", true, R.color.my_primary, Color.WHITE);
+
+                                                holder.addFriendBtn.setOnClickListener(v -> {
+                                                    if (listener != null) {
+                                                        listener.onAddFriendClick(friend);
+                                                    }
+                                                    // Optimistic UI update
+                                                    //setButtonState(holder, "Sent", false, android.R.color.darker_gray, Color.BLACK);
+                                                });
+                                            }
+                                        });
+                            }
+                        });
+            } else if (mode == Mode.INVITE_TO_CLAN) {
+                // ----- Clan invite logic -----
+                setButtonState(holder, "Invite", true, R.color.my_primary, Color.WHITE);
+                holder.addFriendBtn.setOnClickListener(v -> {
+                    if (listener != null) listener.onAddFriendClick(friend);
+                    setButtonState(holder, "Invited", false, android.R.color.darker_gray, Color.BLACK);
+                });
+            } else if(mode == Mode.CLAN_MEMBER){
+                setButtonState(holder, "Member", false, android.R.color.darker_gray, Color.BLACK);
+            }
 
         } else {
             holder.addFriendBtn.setVisibility(View.GONE);
         }
+    }
+
+    public void setMode(Mode mode, OnAddFriendClickListener listener) {
+        this.mode = mode;
+        this.listener = listener;
+    }
+
+    public void setMemberMode(Mode mode) {
+        this.mode = mode;
+
     }
 
     private void setButtonState(FriendViewHolder holder, String text, boolean enabled, int bgColorRes, int textColor) {

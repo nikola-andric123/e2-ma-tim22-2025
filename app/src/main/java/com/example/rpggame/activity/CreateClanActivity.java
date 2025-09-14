@@ -1,6 +1,8 @@
 package com.example.rpggame.activity;
 
+import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -22,6 +24,14 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -82,11 +92,17 @@ public class CreateClanActivity extends AppCompatActivity {
 
                     // Setup "Invite" button instead of "Add"
                     friendsAdapter.setShowAddButton(true, this::sendClanInvite);
+                    friendsAdapter.setMode(FriendsAdapter.Mode.INVITE_TO_CLAN, this::sendClanInvite);
                 });
     }
 
     private void createClan() {
         String clanName = clanNameInput.getText().toString().trim();
+        //Button createClanBtn = findViewById(R.id.createClanBtn);
+        createClanBtn.setEnabled(false);
+        createClanBtn.setBackgroundColor(Color.GRAY);
+        createClanBtn.setTextColor(Color.WHITE);
+
         if (clanName.isEmpty()) {
             Toast.makeText(this, "Enter clan name", Toast.LENGTH_SHORT).show();
             return;
@@ -131,6 +147,82 @@ public class CreateClanActivity extends AppCompatActivity {
                 .set(invite)
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(this, "Invitation sent to " + friend.getUsername(), Toast.LENGTH_SHORT).show();
+
+                    // ✅ Trigger backend notification
+                    sendInviteNotification(friend.getUid(), createdClanId);
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to send invite: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
+    }
+
+    private void sendInviteNotification(String targetUid, String clanName) {
+        // Fetch the friend's FCM token from Firestore
+        db.collection("users").document(targetUid).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists() && documentSnapshot.contains("fcmToken")) {
+                        String targetToken = documentSnapshot.getString("fcmToken");
+                        Toast.makeText(this, "Target Token " + targetToken, Toast.LENGTH_SHORT).show();
+
+                        new Thread(() -> {
+                            try {
+                                URL url = new URL("http://10.0.2.2:3000/send");
+                                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                                conn.setRequestMethod("POST");
+                                conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+                                conn.setRequestProperty("Accept", "application/json");
+                                conn.setDoOutput(true);
+                                conn.setDoInput(true);
+
+// Build JSON safely
+                                JSONObject data = new JSONObject();
+                                data.put("type", "CLAN_INVITE");
+                                data.put("clanId", createdClanId);
+
+                                JSONObject notification = new JSONObject();
+                                notification.put("title", "Clan Invitation");
+                                notification.put("body", "You have been invited to join " + clanName + "!");
+
+                                JSONObject body = new JSONObject();
+                                body.put("targetToken", targetToken);
+                                body.put("data", data);
+                                body.put("notification", notification);
+
+                                String jsonString = body.toString();
+                                Log.d("FCM_REQUEST", "Sending JSON: " + jsonString);
+
+// Write JSON body
+                                try (OutputStream os = conn.getOutputStream()) {
+                                    byte[] input = jsonString.getBytes(StandardCharsets.UTF_8);
+                                    os.write(input, 0, input.length);
+                                    os.flush();
+                                }
+
+// Read response
+                                int code = conn.getResponseCode();
+                                BufferedReader br = new BufferedReader(
+                                        new InputStreamReader(
+                                                (code >= 200 && code < 300) ? conn.getInputStream() : conn.getErrorStream(),
+                                                StandardCharsets.UTF_8
+                                        )
+                                );
+
+                                StringBuilder response = new StringBuilder();
+                                String line;
+                                while ((line = br.readLine()) != null) {
+                                    response.append(line.trim());
+                                }
+                                Log.d("FCM_REQUEST", "Response code: " + code + " | Response: " + response);
+
+                            } catch (Exception e) {
+                                Log.e("FCM_REQUEST", "Error sending notification", e);
+                            }
+                        }).start();
+
+                    } else {
+                        Log.e("FCM_REQUEST", "No FCM token found for user: " + targetUid);
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("FCM_REQUEST", "Failed to fetch user FCM token", e));
     }
 }

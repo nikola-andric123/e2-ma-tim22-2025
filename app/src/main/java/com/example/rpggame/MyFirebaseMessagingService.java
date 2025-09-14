@@ -27,8 +27,20 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     public void onMessageReceived(RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
 
-        if (remoteMessage.getData().get("type").equals("CLAN_INVITE")) {
+        if ("CLAN_INVITE".equals(remoteMessage.getData().get("type"))) {
             String clanId = remoteMessage.getData().get("clanId");
+
+            // Create channel if needed
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                NotificationChannel channel = new NotificationChannel(
+                        "clan_channel",
+                        "Clan Notifications",
+                        NotificationManager.IMPORTANCE_HIGH
+                );
+                NotificationManager manager = getSystemService(NotificationManager.class);
+                manager.createNotificationChannel(channel);
+            }
+
             showClanInviteNotification(clanId);
         }
     }
@@ -58,6 +70,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 .setOngoing(true) // stays until handled
                 .addAction(R.drawable.back_arrow, "Accept", acceptPendingIntent)
                 .addAction(R.drawable.back_arrow, "Reject", rejectPendingIntent);
+
+
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
