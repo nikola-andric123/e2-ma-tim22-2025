@@ -29,6 +29,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         if ("CLAN_INVITE".equals(remoteMessage.getData().get("type"))) {
             String clanId = remoteMessage.getData().get("clanId");
+            String senderId = remoteMessage.getData().get("senderId");
 
             // Create channel if needed
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -41,17 +42,64 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 manager.createNotificationChannel(channel);
             }
 
-            showClanInviteNotification(clanId);
+            showClanInviteNotification(clanId, senderId);
+        } else if("CLAN_INVITE_ACCEPTED".equals(remoteMessage.getData().get("type"))){
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                NotificationChannel channel = new NotificationChannel(
+                        "clan_channel",
+                        "Clan Notifications",
+                        NotificationManager.IMPORTANCE_HIGH
+                );
+                NotificationManager manager = getSystemService(NotificationManager.class);
+                manager.createNotificationChannel(channel);
+            }
+            if (remoteMessage.getNotification() != null) {
+                String title = remoteMessage.getNotification().getTitle();
+                String body = remoteMessage.getNotification().getBody();
+
+                Log.d("FCM", "Notification: title=" + title + " body=" + body);
+
+                // Show the notification manually
+                showNotification(title, body);
+            }
+            // Create channel if needed
+
         }
     }
 
-    private void showClanInviteNotification(String clanId) {
+    private void showNotification(String title, String body) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    "clan_channel",
+                    "Clan Notifications",
+                    NotificationManager.IMPORTANCE_HIGH
+            );
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(channel);
+        }
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "clan_channel")
+                .setSmallIcon(R.drawable.back_arrow)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true);
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        NotificationManagerCompat.from(this).notify(1002, builder.build());
+    }
+
+    private void showClanInviteNotification(String clanId, String senderId) {
         Context context = getApplicationContext();
 
         // Accept intent
         Intent acceptIntent = new Intent(context, ClanInviteReceiver.class);
         acceptIntent.setAction("ACCEPT_CLAN");
         acceptIntent.putExtra("clanId", clanId);
+        acceptIntent.putExtra("senderId", senderId);
+        Log.d("DATA", "SenderId: " + senderId + " clanId: " + clanId);
         PendingIntent acceptPendingIntent = PendingIntent.getBroadcast(
                 context, 0, acceptIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 

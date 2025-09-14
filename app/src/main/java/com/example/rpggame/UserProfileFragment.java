@@ -157,6 +157,10 @@ public class UserProfileFragment extends Fragment {
         TextView xpLabel = view.findViewById(R.id.xpLabel);
         db.collection("users").document(userUID)
                 .addSnapshotListener((doc, e) -> {
+                    if (e != null) {
+                        Log.e("UserProfile", "Listen failed", e);
+                        return;
+                    }
                     if (doc.exists()) {
                         profileToShow = doc.toObject(UserProfile.class);
                         int avatarId = getAvatarId(profileToShow.getAvatar());

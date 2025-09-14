@@ -252,6 +252,7 @@ public class ClanLeaderActivity extends AppCompatActivity {
                                 JSONObject data = new JSONObject();
                                 data.put("type", "CLAN_INVITE");
                                 data.put("clanId", clanId);
+                                data.put("senderId", currentUserUid);
 
                                 JSONObject notification = new JSONObject();
                                 notification.put("title", "Clan Invitation");
