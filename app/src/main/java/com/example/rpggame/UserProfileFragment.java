@@ -37,7 +37,9 @@ import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -130,6 +132,12 @@ public class UserProfileFragment extends Fragment {
                 int id = item.getItemId();
 
                 if (id == R.id.action_logout) {
+                    db.collection("users").document(userUID)
+                            .update("fcmToken", FieldValue.delete());
+                    FirebaseMessaging.getInstance().deleteToken()
+                            .addOnCompleteListener(task -> {
+                                Log.d("FCM", "Token deleted, new one will be generated next time");
+                            });
                     FirebaseAuth.getInstance().signOut();
                     Intent intent = new Intent(requireContext(), LoginActivity.class);
                     startActivity(intent);

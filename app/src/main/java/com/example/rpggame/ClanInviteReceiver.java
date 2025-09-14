@@ -158,8 +158,8 @@ public class ClanInviteReceiver extends BroadcastReceiver {
                                 //data.put("clanId", clanId);
 
                                 JSONObject notification = new JSONObject();
-                                notification.put("title", memberUsername + "Accepted your invitation.");
-                                notification.put("body", memberUsername + "has became clan member!");
+                                notification.put("title", memberUsername + " Accepted your invitation.");
+                                notification.put("body", memberUsername + " has became clan member!");
 
                                 JSONObject body = new JSONObject();
                                 body.put("targetToken", targetToken);

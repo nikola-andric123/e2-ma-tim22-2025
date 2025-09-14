@@ -82,10 +82,10 @@ public class FindFriendsActivity extends AppCompatActivity {
                         if (!doc.getId().equals(currentUserUid)) { // don't show self
                             String uid = doc.getId();
                             String username = doc.getString("username");
-                            String profileUrl = doc.getString("profileImageUrl");
+                            String avatar = doc.getString("avatar");
                             int level = doc.getLong("level") != null ? doc.getLong("level").intValue() : 0;
 
-                            searchResults.add(new Friend(uid, username, profileUrl, level));
+                            searchResults.add(new Friend(uid, username, avatar, level));
 
                         }
                     }

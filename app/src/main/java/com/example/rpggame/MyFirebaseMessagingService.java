@@ -79,7 +79,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         }
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "clan_channel")
-                .setSmallIcon(R.drawable.back_arrow)
+                .setSmallIcon(R.drawable.notification_bell)
                 .setContentTitle(title)
                 .setContentText(body)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -111,7 +111,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 context, 1, rejectIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "clan_channel")
-                .setSmallIcon(R.drawable.back_arrow)
+                .setSmallIcon(R.drawable.notification_bell)
                 .setContentTitle("Clan Invitation")
                 .setContentText("You were invited to a clan!")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
