@@ -33,6 +33,7 @@ public class FriendRequestsAdapter extends RecyclerView.Adapter<FriendRequestsAd
         this.listener = listener;
     }
 
+
     @NonNull
     @Override
     public RequestViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -46,7 +47,7 @@ public class FriendRequestsAdapter extends RecyclerView.Adapter<FriendRequestsAd
 
         holder.usernameText.setText(friend.getUsername());
         holder.levelText.setText("Level " + friend.getLevel());
-        holder.avatar.setImageResource(R.drawable.back_arrow);
+        holder.avatar.setImageResource(getAvatarId(friend.getProfileImageUrl()));
 
         holder.acceptBtn.setOnClickListener(v -> {
             listener.onAccept(friend);
@@ -73,6 +74,15 @@ public class FriendRequestsAdapter extends RecyclerView.Adapter<FriendRequestsAd
             holder.acceptBtn.setEnabled(false);
             holder.acceptBtn.setTextColor(Color.LTGRAY);
         });
+    }
+    private int getAvatarId(String avatarName) {
+        switch (avatarName) {
+            case "avatar_1": return R.drawable.avatar_1;
+            case "avatar_2": return R.drawable.avatar_2;
+            case "avatar_3": return R.drawable.avatar_3;
+            case "avatar_4": return R.drawable.avatar_4;
+            default: return -1;
+        }
     }
 
     @Override

@@ -74,10 +74,10 @@ public class FriendRequestsActivity extends AppCompatActivity {
                                 .addOnSuccessListener(userDoc -> {
                                     if (userDoc.exists()) {
                                         String username = userDoc.getString("username");
-                                        String profileUrl = userDoc.getString("profileImageUrl");
+                                        String avatar = userDoc.getString("avatar");
                                         int level = userDoc.getLong("level") != null ? userDoc.getLong("level").intValue() : 0;
 
-                                        requestList.add(new Friend(fromUid, username, profileUrl, level));
+                                        requestList.add(new Friend(fromUid, username, avatar, level));
                                         adapter.notifyDataSetChanged();
                                     }
                                 });
