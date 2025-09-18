@@ -1,6 +1,7 @@
 package com.example.rpggame;
 
 import android.Manifest;
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -14,13 +15,19 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
+import com.example.rpggame.activity.ClanChatActivity;
+import com.example.rpggame.activity.ClanLeaderActivity;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
     private static final String TAG = "FCMService";
     private static final String CHANNEL_ID = "fcm_channel";
+    private final List<String> recentMessages = new ArrayList<>();
 
 
     @Override
@@ -56,19 +63,38 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             if (remoteMessage.getNotification() != null) {
                 String title = remoteMessage.getNotification().getTitle();
                 String body = remoteMessage.getNotification().getBody();
-
+                String clanId = remoteMessage.getData().get("clanId");
+                String clanName = remoteMessage.getData().get("clanName");
                 Log.d("FCM", "Notification: title=" + title + " body=" + body);
 
                 // Show the notification manually
-                showNotification(title, body);
+                showNotification(title, body, "clan_channel", clanId, clanName);
             }
             // Create channel if needed
 
+        } else if("CLAN_MESSAGE".equals(remoteMessage.getData().get("type"))){
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                NotificationChannel channel = new NotificationChannel(
+                        "clan_message",
+                        "Clan Message",
+                        NotificationManager.IMPORTANCE_HIGH
+                );
+                NotificationManager manager = getSystemService(NotificationManager.class);
+                manager.createNotificationChannel(channel);
+            }
+            if (remoteMessage.getNotification() != null) {
+                String title = remoteMessage.getNotification().getTitle();
+                String body = remoteMessage.getNotification().getBody();
+                String clanId = remoteMessage.getData().get("clanId");
+                String clanName = remoteMessage.getData().get("clanName");
+                // Show the notification manually
+                showNotification(title, body, "clan_message", clanId, clanName);
+            }
         }
     }
 
-    private void showNotification(String title, String body) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    private void showNotification(String title, String body, String channelId, String clanId, String clanName) {
+        /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                     "clan_channel",
                     "Clan Notifications",
@@ -76,19 +102,56 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             );
             NotificationManager manager = getSystemService(NotificationManager.class);
             manager.createNotificationChannel(channel);
-        }
+        }*/
+           Intent intent = channelId.equals("clan_message") ? new Intent(this, ClanChatActivity.class) : new Intent(this, ClanLeaderActivity.class);
+           intent.putExtra("clanId", clanId);
+           intent.putExtra("clanName", clanName);
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "clan_channel")
+           PendingIntent pi = PendingIntent.getActivity(
+                   this,
+                   0,
+                   intent,
+                   PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+           );
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, channelId)
                 .setSmallIcon(R.drawable.notification_bell)
                 .setContentTitle(title)
                 .setContentText(body)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(true);
+                .setContentIntent(pi)
+                .setAutoCancel(true)
+                .setGroup(channelId); // 🔑 assign to group
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
-        NotificationManagerCompat.from(this).notify(1002, builder.build());
+        int messageId = (int) System.currentTimeMillis();
+        NotificationManagerCompat.from(this).notify(messageId, builder.build());
+
+        recentMessages.add(title + ": " + body);
+        NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle()
+                .setSummaryText("Clan messages");
+        // only show last 5 messages in the summary
+        int start = Math.max(0, recentMessages.size() - 5);
+        for (int i = start; i < recentMessages.size(); i++) {
+            inboxStyle.addLine(recentMessages.get(i));
+        }
+
+        Notification summary = new NotificationCompat.Builder(this, channelId)
+                .setSmallIcon(R.drawable.notification_bell)
+                .setContentTitle(title)
+                .setContentText("You have new messages")
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setStyle(new NotificationCompat.InboxStyle()
+                        .setSummaryText("Clan messages"))
+                .setContentIntent(pi)               // ✅ tap opens chat
+                .setAutoCancel(true)
+                .setGroup(channelId)
+                .setGroupSummary(true) // 🔑 marks this as the summary notification
+                .build();
+
+        NotificationManagerCompat.from(this).notify(0, summary);
     }
 
     private void showClanInviteNotification(String clanId, String senderId) {

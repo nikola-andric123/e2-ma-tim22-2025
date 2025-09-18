@@ -86,7 +86,12 @@ public class ClanInviteReceiver extends BroadcastReceiver {
                                         .collection("invitations").document(uid)
                                         .update("status", "accepted");
                                 Log.d("CLAN RECEIVER", "SenderId: " + senderId + "memberUsername: " + memberUsername.toString());
-                                sendAcceptedNotification(senderId, memberUsername.toString());
+                                db.collection("clans").document(clanId).get()
+                                                .addOnSuccessListener(cln -> {
+                                                    sendAcceptedNotification(senderId, memberUsername.toString(), clanId,
+                                                            cln.getString("name"));
+                                                });
+
 
                             });
 
@@ -133,7 +138,7 @@ public class ClanInviteReceiver extends BroadcastReceiver {
         });
     }
 
-    private void sendAcceptedNotification(String targetUid, String memberUsername) {
+    private void sendAcceptedNotification(String targetUid, String memberUsername, String clanId, String clanName) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         // Fetch the friend's FCM token from Firestore
         db.collection("users").document(targetUid).get()
@@ -155,7 +160,8 @@ public class ClanInviteReceiver extends BroadcastReceiver {
 // Build JSON safely
                                 JSONObject data = new JSONObject();
                                 data.put("type", "CLAN_INVITE_ACCEPTED");
-                                //data.put("clanId", clanId);
+                                data.put("clanId", clanId);
+                                data.put("clanName", clanName);
 
                                 JSONObject notification = new JSONObject();
                                 notification.put("title", memberUsername + " Accepted your invitation.");

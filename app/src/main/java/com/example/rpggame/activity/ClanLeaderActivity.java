@@ -1,6 +1,7 @@
 package com.example.rpggame.activity;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
@@ -113,7 +114,10 @@ public class ClanLeaderActivity extends AppCompatActivity {
 
         // Chat button
         chatFab.setOnClickListener(v -> {
-            Toast.makeText(this, "Open clan chat (not implemented)", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, ClanChatActivity.class);
+            intent.putExtra("clanId", clanId);
+            intent.putExtra("clanName", clanName);
+            startActivity(intent);
         });
     }
 

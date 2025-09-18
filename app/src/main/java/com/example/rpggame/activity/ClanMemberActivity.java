@@ -1,6 +1,7 @@
 package com.example.rpggame.activity;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
@@ -17,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.rpggame.MembersAdapter;
 import com.example.rpggame.R;
 import com.example.rpggame.domain.Member;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -30,6 +32,7 @@ public class ClanMemberActivity extends AppCompatActivity {
     private Button leaveClanButton;
     private RecyclerView membersRecyclerView;
     private MembersAdapter membersAdapter;
+    private FloatingActionButton chatFab;
 
     private FirebaseFirestore db;
     private FirebaseAuth auth;
@@ -51,6 +54,7 @@ public class ClanMemberActivity extends AppCompatActivity {
         // Passed from previous activity
         clanId = getIntent().getStringExtra("clanId");
         clanName = getIntent().getStringExtra("clanName");
+        chatFab = findViewById(R.id.chatFab);
 
         clanNameText.setText(clanName);
 
@@ -62,6 +66,12 @@ public class ClanMemberActivity extends AppCompatActivity {
         loadMembers();
 
         leaveClanButton.setOnClickListener(v -> showLeaveDialog());
+        chatFab.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ClanChatActivity.class);
+            intent.putExtra("clanId", clanId);
+            intent.putExtra("clanName", clanName);
+            startActivity(intent);
+        });
     }
 
     private void loadMembers() {
