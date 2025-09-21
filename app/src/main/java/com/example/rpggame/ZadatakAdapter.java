@@ -1,7 +1,6 @@
 package com.example.rpggame;
 
 import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +8,9 @@ import android.widget.CheckBox;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.rpggame.domain.Kategorija;
+import com.example.rpggame.domain.Zadatak;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

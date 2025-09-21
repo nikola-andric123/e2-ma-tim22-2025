@@ -1,6 +1,7 @@
 package com.example.rpggame;
 
 import com.example.rpggame.domain.UserProfile;
+import com.example.rpggame.domain.Zadatak;
 
 public class LevelUpHelper {
 

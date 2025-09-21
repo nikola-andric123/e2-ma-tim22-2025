@@ -1,4 +1,4 @@
-package com.example.rpggame;
+package com.example.rpggame.activity;
 
 import android.animation.Animator;
 import android.content.Context;
@@ -28,10 +28,13 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.airbnb.lottie.LottieAnimationView;
+import com.example.rpggame.domain.Boss;
+import com.example.rpggame.R;
+import com.example.rpggame.domain.Zadatak;
+import com.example.rpggame.ZadatakRepository;
 import com.example.rpggame.domain.Boots;
 import com.example.rpggame.domain.BowAndArrow;
 import com.example.rpggame.domain.Item;
-import com.example.rpggame.domain.Potion;
 import com.example.rpggame.domain.Shield;
 import com.example.rpggame.domain.UserProfile;
 import com.example.rpggame.helper.ItemFactory;
@@ -45,7 +48,6 @@ import com.google.firebase.firestore.WriteBatch;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.function.Consumer;
 
 public class BorbaActivity extends AppCompatActivity implements SensorEventListener {

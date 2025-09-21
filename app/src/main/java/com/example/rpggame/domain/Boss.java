@@ -1,4 +1,4 @@
-package com.example.rpggame;
+package com.example.rpggame.domain;
 
 import androidx.annotation.NonNull;
 import androidx.room.Entity;

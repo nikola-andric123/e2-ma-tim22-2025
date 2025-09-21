@@ -35,19 +35,19 @@
             android:name=".activity.FindFriendsActivity"
             android:exported="false" />
         <activity
-            android:name=".EquipmentSelectionActivity"
+            android:name=".activity.EquipmentSelectionActivity"
             android:exported="false" />
         <activity
-            android:name=".BorbaActivity"
+            android:name=".activity.BorbaActivity"
             android:exported="false" />
         <activity
-            android:name=".DetaljiZadatkaActivity"
+            android:name=".activity.DetaljiZadatkaActivity"
             android:exported="false" />
         <activity
             android:name=".DetaljiZadatakaActivity"
             android:exported="false" />
         <activity
-            android:name=".KreirajZadatakActivity"
+            android:name=".activity.KreirajZadatakActivity"
             android:exported="false" />
         <activity
             android:name=".activity.UserProfileActivity"

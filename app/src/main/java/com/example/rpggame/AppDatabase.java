@@ -6,6 +6,13 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.room.TypeConverters;
 
+import com.example.rpggame.dao.BossDao;
+import com.example.rpggame.dao.KategorijaDao;
+import com.example.rpggame.dao.ZadatakDao;
+import com.example.rpggame.domain.Boss;
+import com.example.rpggame.domain.Kategorija;
+import com.example.rpggame.domain.Zadatak;
+
 // AŽURIRANO: Dodat Boss.class i povećana verzija na 3
 @Database(entities = {Zadatak.class, Kategorija.class, Boss.class}, version = 3, exportSchema = false)
 @TypeConverters({Converters.class})

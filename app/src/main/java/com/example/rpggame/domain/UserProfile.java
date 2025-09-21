@@ -1,11 +1,7 @@
 package com.example.rpggame.domain;
 
 import com.example.rpggame.Enums.UserTitle;
-import com.example.rpggame.Zadatak;
 import com.google.firebase.Timestamp;
-import com.google.type.DateTime;
-
-import java.sql.Time;
 
 public class UserProfile {
 

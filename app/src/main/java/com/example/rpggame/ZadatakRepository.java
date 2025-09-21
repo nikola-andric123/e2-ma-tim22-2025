@@ -5,7 +5,13 @@ import android.os.Handler;
 import android.os.Looper;
 import android.widget.Toast;
 
+import com.example.rpggame.dao.BossDao;
+import com.example.rpggame.dao.KategorijaDao;
+import com.example.rpggame.dao.ZadatakDao;
+import com.example.rpggame.domain.Boss;
+import com.example.rpggame.domain.Kategorija;
 import com.example.rpggame.domain.UserProfile;
+import com.example.rpggame.domain.Zadatak;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -30,6 +36,7 @@ public class ZadatakRepository {
     public interface OnUserProfileLoadedListener { void onProfileLoaded(UserProfile userProfile); }
     public interface OnBossesLoadedListener { void onBossesLoaded(List<Boss> bosses); }
     public interface OnResetCompleteListener { void onResetComplete(); }
+    public interface OnCountLoadedListener { void onCountLoaded(int count); }
 
     public ZadatakRepository(Application application) {
         this.application = application;
@@ -64,7 +71,12 @@ public class ZadatakRepository {
             mainThreadHandler.post(() -> listener.onTasksLoaded(zadaci));
         });
     }
-
+    public void getActiveTaskCountForCategory(String kategorijaId, OnCountLoadedListener listener) {
+        executorService.execute(() -> {
+            final int count = zadatakDao.getActiveTaskCountForCategory(kategorijaId);
+            mainThreadHandler.post(() -> listener.onCountLoaded(count));
+        });
+    }
     public void insert(Kategorija kategorija) {
         executorService.execute(() -> kategorijaDao.insert(kategorija));
     }
@@ -74,6 +86,9 @@ public class ZadatakRepository {
             final List<Kategorija> kategorije = kategorijaDao.getSveKategorije();
             mainThreadHandler.post(() -> listener.onCategoriesLoaded(kategorije));
         });
+    }
+    public void delete(Kategorija kategorija) {
+        executorService.execute(() -> kategorijaDao.delete(kategorija));
     }
 
     public void insert(Boss boss) {
