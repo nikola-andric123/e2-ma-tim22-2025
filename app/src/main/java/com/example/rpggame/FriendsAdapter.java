@@ -1,7 +1,9 @@
 package com.example.rpggame;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,6 +16,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.rpggame.activity.FindFriendsActivity;
 import com.example.rpggame.domain.Friend;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.collection.LLRBNode;
@@ -32,6 +35,8 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
     private String currentUserUid;
+    private OnFriendClickListener friendClickedListener;
+
     public enum Mode {
         ADD_FRIEND,
         INVITE_TO_CLAN,
@@ -43,6 +48,9 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
     public interface OnAddFriendClickListener {
         void onAddFriendClick(Friend friend);
     }
+    public interface OnFriendClickListener {
+        void onFriendClick(String friendId);
+    }
 
     public FriendsAdapter(Context context, List<Friend> friendsList) {
         this.context = context;
@@ -50,11 +58,16 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
         currentUserUid = mAuth.getCurrentUser().getUid();
+
     }
 
     public void setShowAddButton(boolean show, OnAddFriendClickListener listener) {
         this.showAddButton = show;
         this.listener = listener;
+    }
+    public void setNameClicked(OnFriendClickListener friendClickedListener) {
+
+        this.friendClickedListener = friendClickedListener;
     }
     public void setAlreadyMemberButton() {
         this.showAddButton = true;
@@ -77,6 +90,13 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
         Friend friend = friendsList.get(position);
         holder.username.setText(friend.getUsername());
         holder.level.setText("Level " + friend.getLevel());
+        holder.username.setOnClickListener(v -> {
+            if (friendClickedListener != null) {
+                friendClickedListener.onFriendClick(friend.getUid());
+            }
+
+        });
+
 
         int avatarId = getAvatarResId(friend.getProfileImageUrl());
         if (avatarId != -1) {
@@ -190,4 +210,5 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
         }
     }
 }
+
 

@@ -1,5 +1,6 @@
 package com.example.rpggame.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -11,11 +12,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.rpggame.FriendsAdapter;
+import com.example.rpggame.OtherUsersProfileFragment;
 import com.example.rpggame.R;
+import com.example.rpggame.UserProfileFragment;
 import com.example.rpggame.domain.Friend;
 import com.example.rpggame.domain.UserProfile;
 import com.google.firebase.auth.FirebaseAuth;
@@ -91,12 +95,18 @@ public class FindFriendsActivity extends AppCompatActivity {
                     }
                     searchAdapter.notifyDataSetChanged();
                     searchAdapter.setShowAddButton(true, this::addFriend);
+                    searchAdapter.setNameClicked(this::showUsersProfile);
 
 
 
                 });
     }
 
+    private void showUsersProfile(String friendId) {
+        Intent intent = new Intent(this, OtherUsersProfileActivity.class);
+        intent.putExtra("userId", friendId);
+        startActivity(intent);
+    }
     // Called when "Add Friend" button is clicked
     private void addFriend(Friend friend) {
 

@@ -17,6 +17,12 @@
         android:theme="@style/Theme.RPGgame"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".activity.InventoryActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.OtherUsersProfileActivity"
+            android:exported="false" />
+        <activity
             android:name=".activity.ClanChatActivity"
             android:exported="false" />
         <activity
