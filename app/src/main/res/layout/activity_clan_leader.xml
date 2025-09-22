@@ -1,5 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -55,11 +57,13 @@
     </LinearLayout>
 
     <!-- RecyclerView for friends -->
+    <!-- AŽURIRANO: Dodata referenca "layout_above" da se lista ne preklapa sa novim dugmetom -->
     <androidx.cardview.widget.CardView
         xmlns:card="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_below="@id/filterOptions"
+        android:layout_above="@+id/btn_zapocni_misiju"
         android:layout_margin="5dp"
         android:padding="10dp"
         card:cardCornerRadius="10dp"
@@ -73,6 +77,18 @@
             android:padding="8dp" />
 
     </androidx.cardview.widget.CardView>
+
+
+    <!-- NOVO: Dugme za započinjanje misije, pozicionirano iznad Chat dugmeta -->
+    <Button
+        android:id="@+id/btn_zapocni_misiju"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/chatFab"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:text="Započni Specijalnu Misiju"
+        />
 
     <!-- Floating Action Button for Chat -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton

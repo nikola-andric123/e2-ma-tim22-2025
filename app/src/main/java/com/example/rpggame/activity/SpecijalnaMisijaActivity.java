@@ -4,21 +4,21 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
+import com.example.rpggame.NapredakAdapter;
 import com.example.rpggame.R;
 import com.example.rpggame.ZadatakRepository;
 import com.example.rpggame.domain.SpecijalnaMisija;
+import com.example.rpggame.domain.UserProfile;
 
 public class SpecijalnaMisijaActivity extends AppCompatActivity {
 
     private TextView statusMisijeText, hpBosaMisijeLabel;
     private ProgressBar hpBosaMisijeBar;
     private RecyclerView clanoviMisijaRecyclerview;
-
+    private NapredakAdapter napredakAdapter;
     private ZadatakRepository repository;
 
     @Override
@@ -33,20 +33,23 @@ public class SpecijalnaMisijaActivity extends AppCompatActivity {
 
         repository = new ZadatakRepository(getApplication());
 
+        setupRecyclerView();
         ucitajStatusMisije();
     }
 
+    private void setupRecyclerView() {
+        clanoviMisijaRecyclerview.setLayoutManager(new LinearLayoutManager(this));
+        napredakAdapter = new NapredakAdapter();
+        clanoviMisijaRecyclerview.setAdapter(napredakAdapter);
+    }
+
     private void ucitajStatusMisije() {
-        // Prvo dohvatimo profil da bismo saznali ID klana
         repository.getUserProfile(userProfile -> {
             if (userProfile != null && userProfile.getClanId() != null && !userProfile.getClanId().isEmpty()) {
-                // Kada imamo ID klana, tražimo aktivnu misiju
                 repository.getAktivnaMisijaZaSavez(userProfile.getClanId(), misija -> {
                     if (misija != null) {
-                        // Ako misija postoji, prikaži podatke
                         prikaziPodatkeMisije(misija);
                     } else {
-                        // Ako ne postoji, prikaži poruku
                         statusMisijeText.setText("Trenutno nema aktivnih misija za tvoj savez.");
                         hpBosaMisijeBar.setVisibility(View.GONE);
                         hpBosaMisijeLabel.setVisibility(View.GONE);
@@ -62,10 +65,14 @@ public class SpecijalnaMisijaActivity extends AppCompatActivity {
 
     private void prikaziPodatkeMisije(SpecijalnaMisija misija) {
         statusMisijeText.setText("Misija je aktivna!");
+        hpBosaMisijeBar.setVisibility(View.VISIBLE);
+        hpBosaMisijeLabel.setVisibility(View.VISIBLE);
         hpBosaMisijeBar.setMax(misija.getMaksHpBosa());
         hpBosaMisijeBar.setProgress(misija.getHpBosa());
         hpBosaMisijeLabel.setText("HP Bosa: " + misija.getHpBosa() + " / " + misija.getMaksHpBosa());
 
-        // TODO: Učitati i prikazati napredak svih članova u RecyclerView
+        repository.getNapredakSvihClanova(misija.getId(), listaNapretka -> {
+            napredakAdapter.setListaNapretka(listaNapretka);
+        });
     }
 }
