@@ -101,7 +101,14 @@
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     />
-
+                <Button
+                    android:id="@+id/btn_specijalna_misija"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Pregled Specijalne Misije"
+                    android:layout_marginTop="16dp"
+                    android:visibility="gone"
+                    tools:visibility="visible"/>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 

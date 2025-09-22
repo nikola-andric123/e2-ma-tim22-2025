@@ -10,6 +10,7 @@ import com.example.rpggame.dao.KategorijaDao;
 import com.example.rpggame.dao.ZadatakDao;
 import com.example.rpggame.domain.Boss;
 import com.example.rpggame.domain.Kategorija;
+import com.example.rpggame.domain.SpecijalnaMisija;
 import com.example.rpggame.domain.UserProfile;
 import com.example.rpggame.domain.Zadatak;
 import com.google.firebase.auth.FirebaseAuth;
@@ -30,7 +31,7 @@ public class ZadatakRepository {
     private Application application;
     private ExecutorService executorService;
     private Handler mainThreadHandler;
-
+    public interface OnMissionLoadedListener { void onMissionLoaded(SpecijalnaMisija misija); }
     public interface OnTasksLoadedListener { void onTasksLoaded(List<Zadatak> zadaci); }
     public interface OnCategoriesLoadedListener { void onCategoriesLoaded(List<Kategorija> kategorije); }
     public interface OnUserProfileLoadedListener { void onProfileLoaded(UserProfile userProfile); }
@@ -70,6 +71,27 @@ public class ZadatakRepository {
             final List<Zadatak> zadaci = zadatakDao.getZadatkeOd(timestamp);
             mainThreadHandler.post(() -> listener.onTasksLoaded(zadaci));
         });
+    }
+    public void getAktivnaMisijaZaSavez(String clanId, OnMissionLoadedListener listener) {
+        if (clanId == null || clanId.isEmpty()) {
+            listener.onMissionLoaded(null);
+            return;
+        }
+
+        db.collection("missions")
+                .whereEqualTo("idSaveza", clanId)
+                .whereEqualTo("status", "AKTIVNA")
+                .limit(1)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        SpecijalnaMisija misija = queryDocumentSnapshots.getDocuments().get(0).toObject(SpecijalnaMisija.class);
+                        listener.onMissionLoaded(misija);
+                    } else {
+                        listener.onMissionLoaded(null); // Nema aktivne misije
+                    }
+                })
+                .addOnFailureListener(e -> listener.onMissionLoaded(null));
     }
     public void getActiveTaskCountForCategory(String kategorijaId, OnCountLoadedListener listener) {
         executorService.execute(() -> {

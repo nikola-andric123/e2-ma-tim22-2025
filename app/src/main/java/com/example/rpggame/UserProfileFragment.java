@@ -29,6 +29,7 @@ import com.example.rpggame.activity.CreateClanActivity;
 import com.example.rpggame.activity.FindFriendsActivity;
 import com.example.rpggame.activity.FriendRequestsActivity;
 import com.example.rpggame.activity.LoginActivity;
+import com.example.rpggame.activity.SpecijalnaMisijaActivity;
 import com.example.rpggame.activity.UserProfileActivity;
 import com.example.rpggame.domain.Friend;
 import com.example.rpggame.domain.UserProfile;
@@ -55,6 +56,7 @@ public class UserProfileFragment extends Fragment {
     private TextView usernameText, levelText, powerPointsText, experienceText, coinsText, badgesText;
     private Button changePasswordBtn;
     private Button logoutBtn;
+    private Button btnSpecijalnaMisija;
     private RecyclerView friendsRecyclerView;
     private String userUID;
     private boolean isClanLeader = false;
@@ -78,6 +80,7 @@ public class UserProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        btnSpecijalnaMisija = view.findViewById(R.id.btn_specijalna_misija);
         userAvatar = view.findViewById(R.id.userAvatar);
         usernameText = view.findViewById(R.id.usernameText);
         levelText = view.findViewById(R.id.levelText);
@@ -121,6 +124,10 @@ public class UserProfileFragment extends Fragment {
             startActivity(new Intent(requireContext(), FriendRequestsActivity.class));
         });
 
+        btnSpecijalnaMisija.setOnClickListener(v -> {
+            Intent intent = new Intent(getContext(), SpecijalnaMisijaActivity.class);
+            startActivity(intent);
+        });
 
         ImageView menuIcon = view.findViewById(R.id.menuIcon);
 
@@ -179,6 +186,11 @@ public class UserProfileFragment extends Fragment {
                         experienceText.setText("Experience points: " + profileToShow.getExperiencePoints());
                         coinsText.setText("Collected coins: " + profileToShow.getCollectedCoins());
                         badgesText.setText("Badges: " + profileToShow.getNumberOfBadges());
+                        if (profileToShow.getClanId() != null && !profileToShow.getClanId().isEmpty()) {
+                            btnSpecijalnaMisija.setVisibility(View.VISIBLE);
+                        } else {
+                            btnSpecijalnaMisija.setVisibility(View.GONE);
+                        }
                         if (!currentUser.getUid().equals(userUID)) {
                             changePasswordBtn.setVisibility(View.GONE);
                         }
