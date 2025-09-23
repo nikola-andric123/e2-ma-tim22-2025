@@ -244,7 +244,7 @@ public class ClanLeaderActivity extends AppCompatActivity {
 
                         new Thread(() -> {
                             try {
-                                URL url = new URL("http://10.0.2.2:3000/send");
+                                URL url = new URL("https://e2-ma-tim22-2025.onrender.com/send");
                                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                                 conn.setRequestMethod("POST");
                                 conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
