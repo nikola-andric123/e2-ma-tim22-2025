@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -14,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.rpggame.ChatAdapter;
 import com.example.rpggame.R;
+import com.example.rpggame.ZadatakRepository;
 import com.example.rpggame.domain.ChatMessage;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
@@ -52,6 +54,7 @@ public class ClanChatActivity extends AppCompatActivity {
     private String currentUid;
     private String currentUserName;
     private String avatar;
+    private ZadatakRepository repository;
 
     private List<ChatMessage> messageList = new ArrayList<>();
 
@@ -69,7 +72,7 @@ public class ClanChatActivity extends AppCompatActivity {
         clanName = getIntent().getStringExtra("clanName");
         currentUid = FirebaseAuth.getInstance().getUid();
         db = FirebaseFirestore.getInstance();
-
+        repository = new ZadatakRepository(getApplication());
         toolbar.setTitle(clanName != null ? clanName : "Clan Chat");
         setSupportActionBar(toolbar);
 
@@ -115,6 +118,13 @@ public class ClanChatActivity extends AppCompatActivity {
         msg.setAvatar(avatar);
         messagesRef.child(key).setValue(msg);
         messageEditText.setText("");
+        repository.nanesiStetuMisiji(clanId, ZadatakRepository.AkcijaMisije.PORUKA_U_CETU, null, (success, message, damage) -> {
+            if (success) {
+                // Koristi runOnUiThread da bi se Toast poruka sigurno prikazala sa pozadinske niti
+                runOnUiThread(() -> Toast.makeText(ClanChatActivity.this, "Tvoja poruka je nanela " + damage + " HP štete bosu misije!", Toast.LENGTH_SHORT).show());
+            }
+            // U suprotnom (ako je kvota ispunjena ili nema misije), ne prikazujemo ništa da ne ometamo korisnika.
+        });
         db.collection("clans").document(clanId).collection("members").get()
                         .addOnSuccessListener(members -> {
                             for(QueryDocumentSnapshot mem : members){

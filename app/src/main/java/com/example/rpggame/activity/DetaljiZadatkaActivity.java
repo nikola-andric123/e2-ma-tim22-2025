@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.rpggame.LevelUpHelper;
 import com.example.rpggame.R;
+import com.example.rpggame.domain.UserProfile;
 import com.example.rpggame.domain.Zadatak;
 import com.example.rpggame.ZadatakRepository;
 
@@ -89,6 +90,7 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
 
             repository.getUserProfile(userProfile -> {
                 if (userProfile != null) {
+                    nanesiStetuZaZadatak(userProfile, trenutniZadatak);
                     boolean leveledUp = LevelUpHelper.addXpPointsAndCheckForLevelUp(userProfile, trenutniZadatak);
                     repository.updateUserProfile(userProfile);
                     Toast.makeText(this, "Zadatak označen kao URAĐEN!", Toast.LENGTH_SHORT).show();
@@ -134,6 +136,27 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
 
         btnObrisi.setOnClickListener(v -> {
             prikaziDijalogZaPotvrduBrisanja();
+        });
+    }
+    private void nanesiStetuZaZadatak(UserProfile user, Zadatak zadatak) {
+        if (user.getClanId() == null || user.getClanId().isEmpty()) {
+            return;
+        }
+
+        ZadatakRepository.AkcijaMisije akcija;
+        Zadatak.Tezina tezina = zadatak.getTezina();
+        Zadatak.Bitnost bitnost = zadatak.getBitnost();
+
+        if (tezina == Zadatak.Tezina.VEOMA_LAK || tezina == Zadatak.Tezina.LAK || bitnost == Zadatak.Bitnost.NORMALAN || bitnost == Zadatak.Bitnost.VAZAN) {
+            akcija = ZadatakRepository.AkcijaMisije.LAKSI_ZADATAK;
+        } else {
+            akcija = ZadatakRepository.AkcijaMisije.TEZI_ZADATAK;
+        }
+
+        repository.nanesiStetuMisiji(user.getClanId(), akcija, zadatak, (success, message, damage) -> {
+            if (success) {
+                Toast.makeText(this, "Naneo si " + damage + " HP štete bosu misije!", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 

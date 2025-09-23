@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    tools:context=".SpecijalnaMisijaActivity">
+    tools:context=".activity.SpecijalnaMisijaActivity">
 
     <TextView
         android:layout_width="wrap_content"
@@ -17,6 +17,16 @@
         android:textStyle="bold"
         android:layout_gravity="center_horizontal"/>
 
+    <!-- NOVO: Slika bosa za misiju -->
+    <ImageView
+        android:id="@+id/slika_bosa_misije"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:src="@drawable/boss_crveni_zmaj"
+        tools:srcCompat="@tools:sample/avatars" />
+
     <TextView
         android:id="@+id/status_misije_text"
         android:layout_width="wrap_content"
@@ -24,14 +34,14 @@
         android:text="Učitavanje statusa misije..."
         android:textSize="18sp"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="8dp"/>
+        android:layout_marginTop="16dp"/>
 
     <ProgressBar
         android:id="@+id/hp_bosa_misije_bar"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="32dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:max="100"
         android:progress="50"
         android:progressTint="@android:color/holo_purple" />

@@ -24,16 +24,25 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Transaction;
 import com.google.firebase.firestore.WriteBatch;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ZadatakRepository {
-
+    public enum AkcijaMisije {
+        LAKSI_ZADATAK, // 1 HP, max 10
+        TEZI_ZADATAK,  // 4 HP, max 6
+        UDARAC_BOSA,   // 2 HP, max 10
+        KUPOVINA,      // 2 HP, max 5
+        PORUKA_U_CETU  // 4 HP, max 1 dnevno
+    }
     private ZadatakDao zadatakDao;
     private KategorijaDao kategorijaDao;
     private BossDao bossDao;
@@ -44,7 +53,7 @@ public class ZadatakRepository {
     private Handler mainThreadHandler;
     public interface OnClanLoadedListener { void onClanLoaded(Clan clan); }
     public interface OnMissionStartedListener { void onMissionStarted(boolean success, String message); }
-
+    public interface OnDamageAppliedListener { void onDamageApplied(boolean success, String message, int damage); }
     public interface OnMissionLoadedListener { void onMissionLoaded(SpecijalnaMisija misija); }
     public interface OnTasksLoadedListener { void onTasksLoaded(List<Zadatak> zadaci); }
     public interface OnCategoriesLoadedListener { void onCategoriesLoaded(List<Kategorija> kategorije); }
@@ -212,6 +221,86 @@ public class ZadatakRepository {
                     listener.onMissionStarted(false, "Greška pri učitavanju članova klana: " + e.getMessage());
                 });
     }
+    public void nanesiStetuMisiji(String clanId, AkcijaMisije akcija, Zadatak zadatak, OnDamageAppliedListener listener) {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser == null) {
+            listener.onDamageApplied(false, "Korisnik nije ulogovan.", 0);
+            return;
+        }
+        String userId = currentUser.getUid();
+
+        getAktivnaMisijaZaSavez(clanId, misija -> {
+            if (misija == null) {
+                listener.onDamageApplied(false, null, 0);
+                return;
+            }
+
+            DocumentReference misijaRef = db.collection("missions").document(misija.getId());
+            DocumentReference napredakRef = misijaRef.collection("clanProgress").document(userId);
+
+            db.runTransaction((Transaction.Function<Integer>) transaction -> {
+                DocumentSnapshot napredakSnap = transaction.get(napredakRef);
+                NapredakKorisnikaUMisiji napredak = napredakSnap.toObject(NapredakKorisnikaUMisiji.class);
+                if (napredak == null) {
+                    napredak = new NapredakKorisnikaUMisiji();
+                    napredak.setIdKorisnika(userId);
+                }
+
+                int steta = 0;
+                switch (akcija) {
+                    case LAKSI_ZADATAK:
+                        if (napredak.getBrojLaksihZadataka() < 10) {
+                            steta = (zadatak.getTezina() == Zadatak.Tezina.LAK && zadatak.getBitnost() == Zadatak.Bitnost.NORMALAN) ? 2 : 1;
+                            napredak.setBrojLaksihZadataka(napredak.getBrojLaksihZadataka() + 1);
+                        }
+                        break;
+                    case TEZI_ZADATAK:
+                        if (napredak.getBrojTezihZadataka() < 6) {
+                            steta = 4;
+                            napredak.setBrojTezihZadataka(napredak.getBrojTezihZadataka() + 1);
+                        }
+                        break;
+                    case UDARAC_BOSA:
+                        if (napredak.getBrojUdaracaBosa() < 10) {
+                            steta = 2;
+                            napredak.setBrojUdaracaBosa(napredak.getBrojUdaracaBosa() + 1);
+                        }
+                        break;
+                    case KUPOVINA:
+                        if (napredak.getBrojKupovina() < 5) {
+                            steta = 2;
+                            napredak.setBrojKupovina(napredak.getBrojKupovina() + 1);
+                        }
+                        break;
+                    case PORUKA_U_CETU:
+                        String danasnjiDatum = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+                        if (!napredak.getDaniSaPorukama().contains(danasnjiDatum)) {
+                            steta = 4;
+                            napredak.getDaniSaPorukama().add(danasnjiDatum);
+                        }
+                        break;
+                }
+
+                if (steta > 0) {
+                    DocumentSnapshot misijaSnap = transaction.get(misijaRef);
+                    long noviHpBosa = misijaSnap.getLong("hpBosa") - steta;
+                    transaction.update(misijaRef, "hpBosa", noviHpBosa);
+                    napredak.setNanetaSteta(napredak.getNanetaSteta() + steta);
+                    transaction.set(napredakRef, napredak);
+                }
+                return steta;
+            }).addOnSuccessListener(steta -> {
+                if (steta > 0) {
+                    listener.onDamageApplied(true, "Šteta uspešno naneta!", steta);
+                } else {
+                    listener.onDamageApplied(false, "Ispunjena kvota za ovu akciju.", 0);
+                }
+            }).addOnFailureListener(e -> {
+                listener.onDamageApplied(false, "Greška: " + e.getMessage(), 0);
+            });
+        });
+    }
+
     public void getSveKategorije(OnCategoriesLoadedListener listener) {
         executorService.execute(() -> {
             final List<Kategorija> kategorije = kategorijaDao.getSveKategorije();
@@ -258,10 +347,8 @@ public class ZadatakRepository {
             String uid = currentUser.getUid();
             db.collection("users").document(uid).set(profile)
                     .addOnSuccessListener(aVoid -> {
-                        mainThreadHandler.post(() -> Toast.makeText(application, "Profil sačuvan!", Toast.LENGTH_SHORT).show());
                     })
                     .addOnFailureListener(e -> {
-                        mainThreadHandler.post(() -> Toast.makeText(application, "Greška pri čuvanju profila.", Toast.LENGTH_SHORT).show());
                     });
         }
     }
