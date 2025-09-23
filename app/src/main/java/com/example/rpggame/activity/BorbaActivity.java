@@ -348,7 +348,7 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
                             .addOnSuccessListener(querySnapshot -> {
                                 if (!querySnapshot.isEmpty()) {
                                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                                        doc.getReference().update("powersIncreasePercent", doc.getDouble("powersIncreasePercent") + 0.02) // example new value
+                                        doc.getReference().update("powerIncreasePercent", doc.getDouble("powerIncreasePercent") + 0.02) // example new value
                                                 .addOnSuccessListener(aVoid ->
                                                         Log.d("Firestore", "Sword updated successfully"))
                                                 .addOnFailureListener(e ->
@@ -356,25 +356,51 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
                                     }
                                 } else {
                                     Log.d("Firestore", "No Sword found in inventory");
+                                    Map<String, Object> sword = new HashMap<>();
+                                    sword.put("name", "Sword");
+                                    sword.put("category", "weapon");
+                                    sword.put("powerIncreasePercent", 5.0);
+
+                                    sword.put("timestamp", FieldValue.serverTimestamp());
+                                    inventoryRef.add(sword)
+                                            .addOnSuccessListener(docRef -> {
+                                                Toast.makeText(this, "Sword added!", Toast.LENGTH_SHORT).show();
+                                            })
+                                            .addOnFailureListener(e -> {
+                                                Toast.makeText(this, "Failed to add sword: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                            });
                                 }
                             })
                             .addOnFailureListener(e -> Log.e("Firestore", "Error searching inventory", e));
                     break;
                 }
                 case "Luk i strela": {
-                    inventoryRef.whereEqualTo("name", "Sword")
+                    inventoryRef.whereEqualTo("name", "bow_and_arrow")
                             .get()
                             .addOnSuccessListener(querySnapshot -> {
                                 if (!querySnapshot.isEmpty()) {
                                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                                        doc.getReference().update("lootIncreasePercent", doc.getDouble("lootIncreasePercent") + 0.02) // example new value
+                                        doc.getReference().update("coinsIncreasePercent", doc.getDouble("coinsIncreasePercent") + 0.02) // example new value
                                                 .addOnSuccessListener(aVoid ->
                                                         Log.d("Firestore", "BowAndArrow updated successfully"))
                                                 .addOnFailureListener(e ->
                                                         Log.e("Firestore", "Error updating BowAndArrow", e));
                                     }
                                 } else {
-                                    Log.d("Firestore", "No Sword found in inventory");
+                                    Log.d("Firestore", "No Bow found in inventory");
+                                    Map<String, Object> bow = new HashMap<>();
+                                    bow.put("name", "bow_and_arrow");
+                                    bow.put("category", "weapon");
+                                    bow.put("coinsIncreasePercent", 5.0);
+
+                                    bow.put("timestamp", FieldValue.serverTimestamp());
+                                    inventoryRef.add(bow)
+                                            .addOnSuccessListener(docRef -> {
+                                                Toast.makeText(this, "Bow added!", Toast.LENGTH_SHORT).show();
+                                            })
+                                            .addOnFailureListener(e -> {
+                                                Toast.makeText(this, "Failed to add bow: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                            });
                                 }
                             })
                             .addOnFailureListener(e -> Log.e("Firestore", "Error searching inventory", e));

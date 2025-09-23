@@ -48,6 +48,7 @@ public class CreateClanActivity extends AppCompatActivity {
     private String currentUserUid;
     private List<Friend> friendsList = new ArrayList<>();
     private FriendsAdapter friendsAdapter;
+    String clanName;
     private String createdClanId; // store clanId after creation
 
     @Override
@@ -97,7 +98,7 @@ public class CreateClanActivity extends AppCompatActivity {
     }
 
     private void createClan() {
-        String clanName = clanNameInput.getText().toString().trim();
+        clanName = clanNameInput.getText().toString().trim();
         //Button createClanBtn = findViewById(R.id.createClanBtn);
         createClanBtn.setEnabled(false);
         createClanBtn.setBackgroundColor(Color.GRAY);
@@ -182,7 +183,7 @@ public class CreateClanActivity extends AppCompatActivity {
 
                                 JSONObject notification = new JSONObject();
                                 notification.put("title", "Clan Invitation");
-                                notification.put("body", "You have been invited to join " + clanName + "!");
+                                notification.put("body", "You have been invited to join " + this.clanName + "!");
 
                                 JSONObject body = new JSONObject();
                                 body.put("targetToken", targetToken);

@@ -26,7 +26,10 @@
             android:layout_height="wrap_content"
             android:text="Friend123"
             android:textSize="16sp"
-            android:textStyle="bold"/>
+            android:textStyle="bold"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground" />
 
         <TextView
             android:id="@+id/friendLevel"

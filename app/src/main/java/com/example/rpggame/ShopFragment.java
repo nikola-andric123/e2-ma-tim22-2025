@@ -17,11 +17,13 @@ import com.example.rpggame.domain.UserProfile;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 
 public class ShopFragment extends Fragment {
@@ -88,47 +90,58 @@ public class ShopFragment extends Fragment {
                     int priceBoots = getPrice(80);
                     int upgradeSword = getPrice(60);
                     int upgradeBow = getPrice(60);
-                    inventoryRef.document("sword").get()
-                            .addOnSuccessListener(sw -> {
-                                if (!sw.exists()) {
-                                    swordBtn.setEnabled(false);
-                                    swordBtn.setAlpha(0.5f);
+                    inventoryRef.get()
+                            .addOnSuccessListener(querySnapshot -> {
+                                if (querySnapshot.isEmpty()) {
+                                    // No items at all
+                                    disableButton(swordBtn);
+                                    disableButton(bowArrowBtn);
+                                    disableButton(glovesBtn);
+                                    disableButton(shieldBtn);
+                                    disableButton(bootsBtn);
+                                    return;
+                                }
 
-                                } else {
-                                    Long quantity = sw.getLong("quantity");
-                                    if (quantity != null && quantity > 0) {
-                                        swordBtn.setEnabled(true);
-                                    } else {
-                                        swordBtn.setEnabled(false);
-                                        swordBtn.setAlpha(0.5f);
+                                for (DocumentSnapshot inventoryItem : querySnapshot) {
+                                    String name = inventoryItem.getString("name");
+                                    String category = inventoryItem.getString("category");
+                                    Long quantity = inventoryItem.getLong("quantity");
+
+                                    boolean hasItem = (quantity != null && quantity > 0);
+
+                                    if ("sword".equalsIgnoreCase(name)) {
+                                        if (hasItem && currentUserProfile.getCollectedCoins() >= upgradeSword) enableButton(swordBtn); else disableButton(swordBtn);
+                                    }
+
+                                    if ("bow_and_arrow".equalsIgnoreCase(name)) {
+                                        if (hasItem && currentUserProfile.getCollectedCoins() >= upgradeBow) enableButton(bowArrowBtn); else disableButton(bowArrowBtn);
+                                    }
+
+                                    if ("gloves".equalsIgnoreCase(name)) {
+                                        if (hasItem) enableButton(glovesBtn); else disableButton(glovesBtn);
+                                    }
+
+                                    if ("shield".equalsIgnoreCase(name)) {
+                                        if (hasItem) enableButton(shieldBtn); else disableButton(shieldBtn);
+                                    }
+
+                                    if ("boots".equalsIgnoreCase(name)) {
+                                        if (hasItem) enableButton(bootsBtn); else disableButton(bootsBtn);
+                                    }
+
+                                    // You can also check by category if needed
+                                    if ("weapon".equalsIgnoreCase(category)) {
+                                        // maybe enable a "weapons tab" or something
                                     }
                                 }
                             })
                             .addOnFailureListener(e -> {
                                 Toast.makeText(getContext(), "Failed to check inventory: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                swordBtn.setEnabled(false);
-                                swordBtn.setAlpha(0.5f);
-                            });
-                    inventoryRef.document("bow_and_arrow").get()
-                            .addOnSuccessListener(bw -> {
-                                if (!bw.exists()) {
-                                    bowArrowBtn.setEnabled(false);
-                                    bowArrowBtn.setAlpha(0.5f);
-
-                                } else {
-                                    Long quantity = bw.getLong("quantity");
-                                    if (quantity != null && quantity > 0) {
-                                        bowArrowBtn.setEnabled(true);
-                                    } else {
-                                        bowArrowBtn.setEnabled(false);
-                                        bowArrowBtn.setAlpha(0.5f);
-                                    }
-                                }
-                            })
-                            .addOnFailureListener(e -> {
-                                Toast.makeText(getContext(), "Failed to check inventory: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                bowArrowBtn.setEnabled(false);
-                                bowArrowBtn.setAlpha(0.5f);
+                                disableButton(swordBtn);
+                                disableButton(bowArrowBtn);
+                                disableButton(glovesBtn);
+                                disableButton(shieldBtn);
+                                disableButton(bootsBtn);
                             });
 
                     oneTimePotion20.setText(String.valueOf(price20));
@@ -170,6 +183,14 @@ public class ShopFragment extends Fragment {
                     if (currentUserProfile.getCollectedCoins() < priceBoots) {
                         bootsBtn.setEnabled(false);
                         bootsBtn.setAlpha(0.5f);
+                    }
+                    if (currentUserProfile.getCollectedCoins() < upgradeSword) {
+                        swordBtn.setEnabled(false);
+                        swordBtn.setAlpha(0.5f);
+                    }
+                    if (currentUserProfile.getCollectedCoins() < upgradeBow) {
+                        bowArrowBtn.setEnabled(false);
+                        bowArrowBtn.setAlpha(0.5f);
                     }
 
                     oneTimePotion20.setOnClickListener(v -> {
@@ -255,41 +276,46 @@ public class ShopFragment extends Fragment {
                     swordBtn.setOnClickListener(v -> {
                         db.collection("users").document(userUID)
                                 .collection("inventory")
-                                .document("sword")
                                 .get()
-                                .addOnSuccessListener(swordDoc -> {
-                                    if (swordDoc.exists()) {
-                                        Double currentPower = swordDoc.getDouble("powerIncreasePercent");
-                                        if (currentPower == null) currentPower = 0.0;
+                                .addOnSuccessListener(querySnapshot -> {
+                                    for (DocumentSnapshot inventoryItem : querySnapshot) {
 
-                                        double newPower = currentPower + 0.01;
+                                        if (Objects.equals(inventoryItem.getString("name"), "Sword")) {
+                                            Double currentPower = inventoryItem.getDouble("powerIncreasePercent");
+                                            if (currentPower == null) currentPower = 5.0;
 
-                                        upgradeWeapon("sword","powerIncreasePercent", newPower, userUID);
-                                    } else {
-                                        Toast.makeText(getContext(),
-                                                "You don’t have a sword to upgrade!",
-                                                Toast.LENGTH_SHORT).show();
+                                            double newPower = currentPower + 0.01;
+
+                                            upgradeWeapon("Sword","powerIncreasePercent", newPower, userUID, upgradeSword);
+                                        } else {
+                                            Toast.makeText(getContext(),
+                                                    "You don’t have a sword to upgrade!",
+                                                    Toast.LENGTH_SHORT).show();
+                                        }
                                     }
+
                                 });
                     });
                     bowArrowBtn.setOnClickListener(v -> {
                         db.collection("users").document(userUID)
                                 .collection("inventory")
-                                .document("bow_and_arrow")
                                 .get()
-                                .addOnSuccessListener(swordDoc -> {
-                                    if (swordDoc.exists()) {
-                                        Double currentLoot = swordDoc.getDouble("lootIncreasePercent");
-                                        if (currentLoot == null) currentLoot = 0.0;
+                                .addOnSuccessListener(querySnapshot -> {
+                                    for (DocumentSnapshot inventoryItem : querySnapshot) {
+                                        if (inventoryItem.getString("name").equals("bow_and_arrow")) {
+                                            Double currentLoot = inventoryItem.getDouble("coinsIncreasePercent");
+                                            if (currentLoot == null) currentLoot = 5.0;
 
-                                        double newLoot = currentLoot + 0.01;
+                                            double newLoot = currentLoot + 0.01;
 
-                                        upgradeWeapon("bow_and_arrow","lootIncreasePercent", newLoot, userUID);
-                                    } else {
-                                        Toast.makeText(getContext(),
-                                                "You don’t have a bow to upgrade!",
-                                                Toast.LENGTH_SHORT).show();
+                                            upgradeWeapon("bow_and_arrow","coinsIncreasePercent", newLoot, userUID,upgradeBow);
+                                        } else {
+                                            Toast.makeText(getContext(),
+                                                    "You don’t have a bow to upgrade!",
+                                                    Toast.LENGTH_SHORT).show();
+                                        }
                                     }
+
                                 });
                     });
 
@@ -299,23 +325,50 @@ public class ShopFragment extends Fragment {
 
 
     }
-    private void upgradeWeapon(String weapon, String property, double newValue, String userUID){
+    // helper functions
+    private void disableButton(Button btn) {
+        btn.setEnabled(false);
+        btn.setAlpha(0.5f);
+    }
+
+    private void enableButton(Button btn) {
+        btn.setEnabled(true);
+        btn.setAlpha(1f);
+    }
+    private void upgradeWeapon(String weapon, String property, double newValue, String userUID, int price){
         // update Firestore
         db.collection("users").document(userUID)
                 .collection("inventory")
-                .document(weapon)
-                .update(property, newValue)
-                .addOnSuccessListener(aVoid -> {
-                    // ✅ Successfully upgraded
-                    Toast.makeText(getContext(),
-                            weapon +" upgraded! New value: " + newValue,
-                            Toast.LENGTH_SHORT).show();
+                .whereEqualTo("name", weapon) // find by "name" field
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!querySnapshot.isEmpty()) {
+                        for (DocumentSnapshot doc : querySnapshot) {
+                            // Update weapon property
+                            doc.getReference()
+                                    .update(property, newValue)
+                                    .addOnSuccessListener(aVoid -> {
+                                        // Deduct coins after upgrade succeeds
+                                        db.collection("users").document(userUID)
+                                                .update("collectedCoins", FieldValue.increment(-price))
+                                                .addOnSuccessListener(v ->
+                                                        Toast.makeText(getContext(), weapon + " upgraded! -" + price + " coins", Toast.LENGTH_SHORT).show()
+                                                )
+                                                .addOnFailureListener(e ->
+                                                        Toast.makeText(getContext(), "Failed to update coins: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                                                );
+                                    })
+                                    .addOnFailureListener(e ->
+                                            Toast.makeText(getContext(), "Failed to upgrade " + weapon + ": " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                                    );
+                        }
+                    } else {
+                        Toast.makeText(getContext(), "Weapon " + weapon + " not found in inventory", Toast.LENGTH_SHORT).show();
+                    }
                 })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(getContext(),
-                            "Upgrade failed: " + e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
-                });
+                .addOnFailureListener(e ->
+                        Toast.makeText(getContext(), "Error finding weapon: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                );
 
     }
     private void buyPotion(Button potionBtn, Map<String, Object> potionVal){

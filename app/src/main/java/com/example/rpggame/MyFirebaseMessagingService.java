@@ -22,6 +22,7 @@ import com.google.firebase.messaging.RemoteMessage;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
@@ -37,6 +38,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         if ("CLAN_INVITE".equals(remoteMessage.getData().get("type"))) {
             String clanId = remoteMessage.getData().get("clanId");
             String senderId = remoteMessage.getData().get("senderId");
+            String title = Objects.requireNonNull(remoteMessage.getNotification()).getTitle();
+            String body = remoteMessage.getNotification().getBody();
 
             // Create channel if needed
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -49,7 +52,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 manager.createNotificationChannel(channel);
             }
 
-            showClanInviteNotification(clanId, senderId);
+            showClanInviteNotification(clanId, senderId, title, body);
         } else if("CLAN_INVITE_ACCEPTED".equals(remoteMessage.getData().get("type"))){
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 NotificationChannel channel = new NotificationChannel(
@@ -154,7 +157,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         NotificationManagerCompat.from(this).notify(0, summary);
     }
 
-    private void showClanInviteNotification(String clanId, String senderId) {
+    private void showClanInviteNotification(String clanId, String senderId, String title, String body) {
         Context context = getApplicationContext();
 
         // Accept intent
@@ -175,8 +178,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "clan_channel")
                 .setSmallIcon(R.drawable.notification_bell)
-                .setContentTitle("Clan Invitation")
-                .setContentText("You were invited to a clan!")
+                .setContentTitle(title)
+                .setContentText(body)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setOngoing(true) // stays until handled
                 .addAction(R.drawable.back_arrow, "Accept", acceptPendingIntent)

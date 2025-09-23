@@ -2,6 +2,7 @@ package com.example.rpggame;
 
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -28,11 +29,13 @@ import com.example.rpggame.activity.ClanMemberActivity;
 import com.example.rpggame.activity.CreateClanActivity;
 import com.example.rpggame.activity.FindFriendsActivity;
 import com.example.rpggame.activity.FriendRequestsActivity;
+import com.example.rpggame.activity.InventoryActivity;
 import com.example.rpggame.activity.LoginActivity;
 import com.example.rpggame.activity.SpecijalnaMisijaActivity;
 import com.example.rpggame.activity.UserProfileActivity;
 import com.example.rpggame.domain.Friend;
 import com.example.rpggame.domain.UserProfile;
+import com.example.rpggame.helper.QRCodeHelper;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
@@ -89,6 +92,7 @@ public class UserProfileFragment extends Fragment {
         coinsText = view.findViewById(R.id.coinsText);
         badgesText = view.findViewById(R.id.badgesText);
         titleImage = view.findViewById(R.id.userTitle);
+        ImageView qrImage = view.findViewById(R.id.qrImage);
         //changePasswordBtn = view.findViewById(R.id.changePasswordBtn);
         //logoutBtn = view.findViewById(R.id.logout);
         ProgressBar loadingCircle = view.findViewById(R.id.loadingCircle);
@@ -118,6 +122,9 @@ public class UserProfileFragment extends Fragment {
 
         view.findViewById(R.id.btnFindFriends).setOnClickListener(v -> {
             startActivity(new Intent(requireContext(), FindFriendsActivity.class));
+        });
+        view.findViewById(R.id.btnShowInventory).setOnClickListener(v -> {
+            startActivity(new Intent(requireContext(), InventoryActivity.class));
         });
 
         view.findViewById(R.id.btnFriendRequests).setOnClickListener(v -> {
@@ -168,6 +175,8 @@ public class UserProfileFragment extends Fragment {
 
         // Retrieve userId from arguments instead of getIntent()
         userUID = requireArguments().getString("userId");
+        Bitmap qrCode = QRCodeHelper.generateQRCode(userUID, 512);
+        qrImage.setImageBitmap(qrCode);
         ProgressBar xpProgressBar = view.findViewById(R.id.xpProgressBar);
         TextView xpLabel = view.findViewById(R.id.xpLabel);
         db.collection("users").document(userUID)

@@ -125,7 +125,7 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
 
                         Number coinsIncreasePercent;
                         Number powerIncreasePercent;
-                        if(weaponName.equals("bowAndArrow")){
+                        if(weaponName.equals("bow_and_arrow")){
                             powerIncreasePercent = null;
                             coinsIncreasePercent = (Number) doc.get("coinsIncreasePercent");
                             itemImage.setImageResource(R.drawable.bow_and_arrow);
@@ -140,7 +140,7 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                         if(status.equals("used")){
                             itemButton.setEnabled(false);
                             itemButton.setText("Used");
-                            if(weaponName.equals("BowAndArrow")){
+                            if(weaponName.equals("bow_and_arrow")){
                                 Map<String, Object> weapon = new HashMap<>();
                                 weapon.put("name", weaponName);
                                 weapon.put("category", "weapon");
@@ -174,7 +174,7 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                                 weapon.put("powerIncreasePercent", powerIncreasePercent.doubleValue());
                             }
                             weapon.put("timestamp", FieldValue.serverTimestamp());
-                            if(weaponName.equals("BowAndArrow")) {
+                            if(weaponName.equals("bow_and_arrow")) {
                                 addedPowersRef.add(weapon)
                                         .addOnSuccessListener(docRef -> {
                                             Toast.makeText(this, "Bow equiped!", Toast.LENGTH_SHORT).show();
@@ -306,14 +306,14 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                         if(status.equals("used")){
                             itemButton.setEnabled(false);
                             itemButton.setText("Used");
-                            if (clothesName.equals("gloves")){
+                            if (clothesName.equalsIgnoreCase("gloves")){
 
                                 addedPowerAmount += doc.getDouble("additionalPoints");
                             }else{
                                 Map<String, Object> clothes = new HashMap<>();
                                 clothes.put("name", clothesName);
                                 clothes.put("category", "clothes");
-                                if (clothesName.equals("shield")) {
+                                if (clothesName.equalsIgnoreCase("shield")) {
                                     clothes.put("hitSuccessIncrease", hitSuccessIncrease);
                                 } else {
                                     clothes.put("oneExtraHitChance", oneExtraHitChance);
@@ -351,14 +351,14 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                             Map<String, Object> clothes = new HashMap<>();
                             clothes.put("name", clothesName);
                             clothes.put("category", "clothes");
-                            if (clothesName.equals("Gloves")) {
+                            if (clothesName.equalsIgnoreCase("Gloves")) {
                                 double additionalPoints = ((double)currentUserProfile.getPowerPoints())*(finalPowerBoost.doubleValue()/100);
                                 inventoryRef.document(clothesId)
                                         .update("additionalPoints", additionalPoints);
                                 addedPowerAmount += additionalPoints;
                                 addedPowerPoints.setText(String.valueOf(addedPowerAmount));
 
-                            } else if (clothesName.equals("Shield")) {
+                            } else if (clothesName.equalsIgnoreCase("Shield")) {
                                 clothes.put("hitSuccessIncrease", finalHitSuccessIncrease);
                             } else {
                                 clothes.put("oneExtraHitChance", finalOneExtraHitChance);
@@ -370,7 +370,7 @@ public class EquipmentSelectionActivity extends AppCompatActivity {
                             inventoryRef.document(clothesId)
                                     .update("durability", newDurability);
 
-                            if(!clothesName.equals("gloves")) {
+                            if(!clothesName.equalsIgnoreCase("gloves")) {
                                 addedPowersRef.add(clothes)
                                         .addOnSuccessListener(docRef -> {
                                             Toast.makeText(this, "clothes equiped!", Toast.LENGTH_SHORT).show();
