@@ -223,6 +223,13 @@ public class BorbaActivity extends AppCompatActivity implements SensorEventListe
             animirajUdaracBosa();
             trenutniHpBosa -= trenutniKorisnik.getPowerPoints();
             if (trenutniHpBosa < 0) trenutniHpBosa = 0;
+            if (trenutniKorisnik.getClanId() != null && !trenutniKorisnik.getClanId().isEmpty()) {
+                repository.nanesiStetuMisiji(trenutniKorisnik.getClanId(), ZadatakRepository.AkcijaMisije.UDARAC_BOSA, null, (success, message, damage) -> {
+                    if(success) {
+                        Toast.makeText(this, "Naneo si " + damage + " HP štete i bosu misije!", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
         } else {
             Toast.makeText(this, "Promašaj!", Toast.LENGTH_SHORT).show();
         }
