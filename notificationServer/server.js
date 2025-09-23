@@ -5,17 +5,24 @@ import { readFileSync } from "fs";
 const app = express();
 app.use(express.json()); // ✅ enables JSON body parsing
 
-// Load service account
-const serviceAccount = JSON.parse(
-  readFileSync("./service-account.json", "utf8")
-);
+
+
+let serviceAccount;
+
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  // Running on Render: load from environment variable
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+} else {
+  // Running locally: load from file
+  serviceAccount = JSON.parse(readFileSync("./service-account.json", "utf8"));
+}
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
 app.post("/send", async (req, res) => {
-  const { targetToken, data, title, body } = req.body;
+  const { targetToken, data,notification, title, body } = req.body;
   console.log("Received request:", req.body); // should now log full JSON
 
   if (!targetToken) {
@@ -31,8 +38,8 @@ app.post("/send", async (req, res) => {
     senderId: data.senderId
   },
   notification: {
-    title: "Clan Invitation",
-    body: "You have been invited to join " + data.clanId + "!"
+    title: notification.title,
+    body: notification.body
   }
 };
     const response = await admin.messaging().send(message);
