@@ -33,6 +33,7 @@ public class ShopFragment extends Fragment {
     private UserProfile currentUserProfile;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
+    private ZadatakRepository repository;
     Button oneTimePotion20, oneTimePotion40, permanentPotion5, permanentPotion10, glovesBtn, shieldBtn, bootsBtn, swordBtn, bowArrowBtn;
 
     CollectionReference inventoryRef;
@@ -58,6 +59,7 @@ public class ShopFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        repository = new ZadatakRepository(getActivity().getApplication());
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
         currentUser = mAuth.getCurrentUser();
@@ -391,6 +393,15 @@ public class ShopFragment extends Fragment {
                         inventoryRef.add(potionVal)
                                 .addOnSuccessListener(docRef -> {
                                     Toast.makeText(getContext(), "Potion bought!", Toast.LENGTH_SHORT).show();
+                                    if (currentUserProfile.getClanId() != null && !currentUserProfile.getClanId().isEmpty()) {
+                                        repository.nanesiStetuMisiji(currentUserProfile.getClanId(), ZadatakRepository.AkcijaMisije.KUPOVINA, null, (success, message, damage) -> {
+                                            if (success) {
+                                                if(getActivity() != null) {
+                                                    getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Tvoja kupovina je nanela " + damage + " HP štete bosu misije!", Toast.LENGTH_SHORT).show());
+                                                }
+                                            }
+                                        });
+                                    }
                                 })
                                 .addOnFailureListener(e -> {
                                     Toast.makeText(getContext(), "Failed to add potion: " + e.getMessage(), Toast.LENGTH_SHORT).show();
