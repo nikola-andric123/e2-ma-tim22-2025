@@ -1,49 +1,36 @@
-Kako pokrenuti projekat
-Da biste uspešno pokrenuli i testirali projekat, potrebno je da podesite i lokalno okruženje i Firebase.
+# 📱 Kako pokrenuti projekat
 
-Preduslovi
-Android Studio (preporučeno najnovija verzija)
+Da biste uspešno pokrenuli i testirali projekat, potrebno je da podesite lokalno okruženje i Firebase.
 
-Git
+## 🔧 Preduslovi
+- [Android Studio](https://developer.android.com/studio) (preporučeno najnovija verzija)  
+- [Git](https://git-scm.com/)  
+- Google nalog za [Firebase](https://console.firebase.google.com/)  
 
-Google nalog za Firebase
+## ⚡ Koraci za podešavanje
 
-Koraci za podešavanje
-1. Kloniranje Repozitorijuma
-Bash
-
+### 1. Kloniranje Repozitorijuma
+```bash
 git clone [URL_VAŠEG_REPOZITORIJUMA]
 cd [NAZIV_FOLDERA]
-2. Podešavanje Firebase Projekta
-Ovaj korak je OBAVEZAN jer se aplikacija oslanja na Firebase za rad.
+```
 
-Kreiranje projekta: Idite na Firebase Konzolu i kreirajte novi projekat.
+### 2. Podešavanje Firebase Projekta
+- Idite na [Firebase Konzolu](https://console.firebase.google.com/) i kreirajte novi projekat.  
+- Dodajte Android aplikaciju:  
+  - *Package Name*: `com.example.rpggame` (ili ime paketa vašeg projekta).  
+  - *SHA-1 ključ*: pratite uputstva na ekranu i dodajte ga.  
+- Preuzmite `google-services.json` i ubacite ga u `app/` folder unutar Android Studio projekta.  
+- Aktivirajte servise:  
+  - **Authentication** → *Sign-in method* → omogućite *Email/Password*.  
+  - **Firestore Database** → kreirajte bazu (*test mode*).  
+  - **Realtime Database** → kreirajte bazu (*test mode*).  
 
-Dodavanje Android aplikacije: Unutar projekta, dodajte novu Android aplikaciju.
+### 3. Pokretanje Aplikacije
+1. Otvorite projekat u Android Studio.  
+2. Sačekajte da se Gradle sinhronizacija završi. Ako se pojavi greška: *File → Invalidate Caches / Restart...*  
+3. Izaberite emulator (API 30+) ili povežite fizički uređaj.  
+4. Kliknite na **Run ▶** (zelena Play ikonica).  
 
-Package Name: com.example.rpggame (ili koje god je ime paketa u vašem projektu).
-
-SHA-1 ključ: Pratite uputstva na ekranu da generišete i dodate SHA-1 ključ (potrebno za Google prijavu i druge servise).
-
-Preuzimanje google-services.json: Nakon dodavanja aplikacije, Firebase će vam ponuditi da preuzmete google-services.json fajl. Preuzmite ga.
-
-Postavljanje fajla: Preuzeti google-services.json fajl iskopirajte u app/ folder unutar vašeg Android Studio projekta.
-
-Aktivacija servisa: U Firebase konzoli, u meniju sa leve strane, aktivirajte sledeće servise:
-
-Authentication: Idite na tab "Sign-in method" i omogućite "Email/Password".
-
-Firestore Database: Kreirajte novu bazu. Možete početi u "test mode" za lakši razvoj.
-
-Realtime Database: Kreirajte novu bazu. Takođe možete početi u "test mode".
-
-3. Pokretanje Aplikacije
-Otvorite projekat u Android Studiju.
-
-Sačekajte da se Gradle sinhronizacija završi. Ako se pojavi greška, probajte File -> Invalidate Caches / Restart....
-
-Izaberite emulator (preporučeno API 30+) ili povežite fizički Android uređaj.
-
-Kliknite na "Run" (zelena Play ikonica) u gornjoj traci.
-
-Nakon ovoga, aplikacija bi trebalo da se pokrene. Prvo ćete morati da prođete kroz ekran za registraciju da biste kreirali nalog.
+## 🚀 Nakon pokretanja
+Aplikacija će se startovati i prikazati ekran za **registraciju**. Najpre kreirajte nalog da biste mogli dalje da koristite aplikaciju.  
