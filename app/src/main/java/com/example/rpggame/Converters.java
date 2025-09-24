@@ -2,6 +2,8 @@ package com.example.rpggame;
 
 import androidx.room.TypeConverter;
 
+import com.example.rpggame.domain.Zadatak;
+
 public class Converters {
 
     // Konverteri za Zadatak.Tezina

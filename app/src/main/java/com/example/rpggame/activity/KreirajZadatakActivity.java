@@ -1,4 +1,4 @@
-package com.example.rpggame;
+package com.example.rpggame.activity;
 
 import android.app.Activity;
 import android.app.DatePickerDialog;
@@ -15,6 +15,11 @@ import android.widget.Switch;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.rpggame.R;
+import com.example.rpggame.ZadatakRepository;
+import com.example.rpggame.domain.Kategorija;
+import com.example.rpggame.domain.Zadatak;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

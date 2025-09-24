@@ -1,12 +1,5 @@
 package com.example.rpggame.activity;
 
-import android.Manifest;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.EditText;
@@ -17,14 +10,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.rpggame.ChatAdapter;
 import com.example.rpggame.R;
+import com.example.rpggame.ZadatakRepository;
 import com.example.rpggame.domain.ChatMessage;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
@@ -34,7 +25,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import org.json.JSONObject;
 
@@ -64,6 +54,7 @@ public class ClanChatActivity extends AppCompatActivity {
     private String currentUid;
     private String currentUserName;
     private String avatar;
+    private ZadatakRepository repository;
 
     private List<ChatMessage> messageList = new ArrayList<>();
 
@@ -81,7 +72,7 @@ public class ClanChatActivity extends AppCompatActivity {
         clanName = getIntent().getStringExtra("clanName");
         currentUid = FirebaseAuth.getInstance().getUid();
         db = FirebaseFirestore.getInstance();
-
+        repository = new ZadatakRepository(getApplication());
         toolbar.setTitle(clanName != null ? clanName : "Clan Chat");
         setSupportActionBar(toolbar);
 
@@ -127,6 +118,13 @@ public class ClanChatActivity extends AppCompatActivity {
         msg.setAvatar(avatar);
         messagesRef.child(key).setValue(msg);
         messageEditText.setText("");
+        repository.nanesiStetuMisiji(clanId, ZadatakRepository.AkcijaMisije.PORUKA_U_CETU, null, (success, message, damage) -> {
+            if (success) {
+                // Koristi runOnUiThread da bi se Toast poruka sigurno prikazala sa pozadinske niti
+                runOnUiThread(() -> Toast.makeText(ClanChatActivity.this, "Tvoja poruka je nanela " + damage + " HP štete bosu misije!", Toast.LENGTH_SHORT).show());
+            }
+            // U suprotnom (ako je kvota ispunjena ili nema misije), ne prikazujemo ništa da ne ometamo korisnika.
+        });
         db.collection("clans").document(clanId).collection("members").get()
                         .addOnSuccessListener(members -> {
                             for(QueryDocumentSnapshot mem : members){

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:context=".activity.SpecijalnaMisijaActivity">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Specijalna Misija Saveza"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_gravity="center_horizontal"/>
+
+    <!-- NOVO: Slika bosa za misiju -->
+    <ImageView
+        android:id="@+id/slika_bosa_misije"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:src="@drawable/boss_crveni_zmaj"
+        tools:srcCompat="@tools:sample/avatars" />
+
+    <TextView
+        android:id="@+id/status_misije_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Učitavanje statusa misije..."
+        android:textSize="18sp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"/>
+
+    <ProgressBar
+        android:id="@+id/hp_bosa_misije_bar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="32dp"
+        android:layout_marginTop="8dp"
+        android:max="100"
+        android:progress="50"
+        android:progressTint="@android:color/holo_purple" />
+
+    <TextView
+        android:id="@+id/hp_bosa_misije_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="HP Bosa: 50/100" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Napredak članova:"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginTop="24dp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/clanovi_misija_recyclerview"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="8dp"/>
+
+</LinearLayout>

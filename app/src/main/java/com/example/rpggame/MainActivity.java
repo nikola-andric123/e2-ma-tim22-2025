@@ -16,6 +16,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.example.rpggame.activity.KreirajZadatakActivity;
+import com.example.rpggame.activity.ListaZadatakaFragment;
 import com.example.rpggame.activity.LoginActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;

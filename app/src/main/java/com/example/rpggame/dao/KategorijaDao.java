@@ -1,10 +1,13 @@
-package com.example.rpggame;
+package com.example.rpggame.dao;
 
 import androidx.room.Dao;
+import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 import androidx.room.Update;
+
+import com.example.rpggame.domain.Kategorija;
 
 import java.util.List;
 
@@ -22,4 +25,7 @@ public interface KategorijaDao {
 
     @Query("DELETE FROM kategorija_table")
     void deleteAll();
+
+    @Delete
+    void delete(Kategorija kategorija);
 }

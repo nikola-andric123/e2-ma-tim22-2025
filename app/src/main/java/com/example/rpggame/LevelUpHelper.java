@@ -1,23 +1,82 @@
 package com.example.rpggame;
 
 import com.example.rpggame.domain.UserProfile;
+import com.example.rpggame.domain.Zadatak;
+import com.google.firebase.Timestamp;
+
+import java.util.Calendar;
+import java.util.Date;
 
 public class LevelUpHelper {
 
     // Metoda vraća 'true' ako je došlo do prelaska na novi nivo, inače 'false'
     public static boolean addXpPointsAndCheckForLevelUp(UserProfile user, Zadatak zadatak) {
         int oldLevel = user.getLevel();
+        int totalXpGained = 0;
 
-        // Deo koda preuzet iz UserProfile.java za računanje XP-a
-        int xpFromTask = calculateXpForTask(user.getLevel(), zadatak);
-        user.setExperiencePoints(user.getExperiencePoints() + xpFromTask);
+        // Proveri i resetuj kvote ako je potrebno
+        resetQuotasIfNeeded(user);
 
-        // Deo koda preuzet iz UserProfile.java za proveru nivoa
+        // Izračunaj XP za TEŽINU, poštujući kvotu
+        switch (zadatak.getTezina()) {
+            case VEOMA_LAK:
+                if (user.getDailyVeryEasyNormalCount() < 5) {
+                    totalXpGained += getXpForDifficulty(user.getLevel(), zadatak.getTezina());
+                    user.setDailyVeryEasyNormalCount(user.getDailyVeryEasyNormalCount() + 1);
+                }
+                break;
+            case LAK:
+                if (user.getDailyEasyImportantCount() < 5) {
+                    totalXpGained += getXpForDifficulty(user.getLevel(), zadatak.getTezina());
+                    user.setDailyEasyImportantCount(user.getDailyEasyImportantCount() + 1);
+                }
+                break;
+            case TEZAK:
+                if (user.getDailyHardExtremelyImportantCount() < 2) {
+                    totalXpGained += getXpForDifficulty(user.getLevel(), zadatak.getTezina());
+                    user.setDailyHardExtremelyImportantCount(user.getDailyHardExtremelyImportantCount() + 1);
+                }
+                break;
+            case EKSTREMNO_TEZAK:
+                if (user.getWeeklyExtremelyHardCount() < 1) {
+                    totalXpGained += getXpForDifficulty(user.getLevel(), zadatak.getTezina());
+                    user.setWeeklyExtremelyHardCount(user.getWeeklyExtremelyHardCount() + 1);
+                }
+                break;
+        }
+
+        // Izračunaj XP za BITNOST, poštujući kvotu
+        switch (zadatak.getBitnost()) {
+            case NORMALAN:
+                if (user.getDailyVeryEasyNormalCount() < 5) {
+                    totalXpGained += getXpForImportance(user.getLevel(), zadatak.getBitnost());
+                    // Brojač se već povećao kod težine, ne treba ponovo
+                }
+                break;
+            case VAZAN:
+                if (user.getDailyEasyImportantCount() < 5) {
+                    totalXpGained += getXpForImportance(user.getLevel(), zadatak.getBitnost());
+                }
+                break;
+            case EKSTREMNO_VAZAN:
+                if (user.getDailyHardExtremelyImportantCount() < 2) {
+                    totalXpGained += getXpForImportance(user.getLevel(), zadatak.getBitnost());
+                }
+                break;
+            case SPECIJALAN:
+                if (user.getMonthlySpecialCount() < 1) {
+                    totalXpGained += getXpForImportance(user.getLevel(), zadatak.getBitnost());
+                    user.setMonthlySpecialCount(user.getMonthlySpecialCount() + 1);
+                }
+                break;
+        }
+
+        user.setExperiencePoints(user.getExperiencePoints() + totalXpGained);
         checkForLevelUp(user);
 
-        int newLevel = user.getLevel();
-        return newLevel > oldLevel;
+        return user.getLevel() > oldLevel;
     }
+
 
     private static int calculateXpForTask(int userLevel, Zadatak zadatak) {
         int totalXp = 0;
@@ -41,7 +100,35 @@ public class LevelUpHelper {
         }
         return baseXp;
     }
+    private static void resetQuotasIfNeeded(UserProfile user) {
+        if (user.getLastQuotaReset() == null) {
+            user.setLastQuotaReset(new Timestamp(new Date()));
+            return;
+        }
 
+        Calendar lastReset = Calendar.getInstance();
+        lastReset.setTime(user.getLastQuotaReset().toDate());
+        Calendar now = Calendar.getInstance();
+
+        // Provera da li je prošao dan
+        if (lastReset.get(Calendar.DAY_OF_YEAR) != now.get(Calendar.DAY_OF_YEAR) || lastReset.get(Calendar.YEAR) != now.get(Calendar.YEAR)) {
+            user.setDailyVeryEasyNormalCount(0);
+            user.setDailyEasyImportantCount(0);
+            user.setDailyHardExtremelyImportantCount(0);
+        }
+
+        // Provera da li je prošla nedelja
+        if (lastReset.get(Calendar.WEEK_OF_YEAR) != now.get(Calendar.WEEK_OF_YEAR) || lastReset.get(Calendar.YEAR) != now.get(Calendar.YEAR)) {
+            user.setWeeklyExtremelyHardCount(0);
+        }
+
+        // Provera da li je prošao mesec
+        if (lastReset.get(Calendar.MONTH) != now.get(Calendar.MONTH) || lastReset.get(Calendar.YEAR) != now.get(Calendar.YEAR)) {
+            user.setMonthlySpecialCount(0);
+        }
+
+        user.setLastQuotaReset(new Timestamp(new Date()));
+    }
     private static int getXpForDifficulty(int level, Zadatak.Tezina tezina) {
         int baseXp;
         switch (tezina) {

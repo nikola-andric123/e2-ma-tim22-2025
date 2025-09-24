@@ -1,4 +1,4 @@
-package com.example.rpggame;
+package com.example.rpggame.dao;
 
 import androidx.room.Dao;
 import androidx.room.Delete;
@@ -6,6 +6,8 @@ import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 import androidx.room.Update;
+
+import com.example.rpggame.domain.Zadatak;
 
 import java.util.List;
 
@@ -31,6 +33,8 @@ public interface ZadatakDao {
     @Query("DELETE FROM zadatak_table")
     void deleteAll();
 
+    @Query("SELECT COUNT(*) FROM zadatak_table WHERE kategorija_id = :kategorijaId AND status = 'AKTIVAN'")
+    int getActiveTaskCountForCategory(String kategorijaId);
     @Query("SELECT * FROM zadatak_table WHERE id = :zadatakId")
     Zadatak getZadatakById(String zadatakId);
 }

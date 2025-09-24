@@ -1,4 +1,4 @@
-package com.example.rpggame;
+package com.example.rpggame.activity;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -13,6 +13,11 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.rpggame.R;
+import com.example.rpggame.ZadatakAdapter;
+import com.example.rpggame.ZadatakRepository;
+import com.example.rpggame.domain.Kategorija;
+import com.example.rpggame.domain.Zadatak;
 import com.google.android.material.chip.ChipGroup;
 
 import java.util.ArrayList;

@@ -5,11 +5,11 @@
     android:id="@+id/userProfile"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="UserProfileFragment">
+    tools:context=".UserProfileFragment">
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content">
 
         <!-- Back button -->
         <ImageView
@@ -43,18 +43,7 @@
             android:src="@drawable/baseline_more_vert_24"
             android:contentDescription="Menu"
             android:clickable="true"
-            android:focusable="true"/><!-- use hamburger or 3-dots icon -->
-    <!--
-        <Button
-            android:id="@+id/logout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_margin="16dp"
-            android:text="Logout"
-            android:textColor="@android:color/white"
-            android:background="@drawable/rounded_button"/>
-            -->
+            android:focusable="true"/>
 
         <!-- Profile container (hidden until data loads) -->
         <LinearLayout
@@ -65,17 +54,13 @@
             android:gravity="center_horizontal"
             android:padding="16dp"
             android:layout_below="@id/backArrow"
-            android:visibility="visible">
-
+            android:visibility="gone"
+            tools:visibility="visible">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="16dp"
-                >
-            <!-- Profile picture -->
-
-
+                android:padding="16dp">
 
                 <ImageView
                     android:id="@+id/userAvatar"
@@ -119,8 +104,35 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     />
 
+                <Button
+                    android:id="@+id/btn_specijalna_misija"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="16dp"
+                    android:backgroundTint="@color/my_primary"
+                    android:text="Misija"
+                    android:textColor="#FFFFFF"
+                    android:visibility="gone"
+                    app:layout_constraintEnd_toStartOf="@id/userAvatar"
+                    app:layout_constraintTop_toTopOf="@id/userAvatar"
+                    tools:visibility="visible" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- ======================================================= -->
+            <!-- PROMENA JE OVDE: DODAT JE OVAJ LinearLayout ZA BEDŽEVE -->
+            <!-- ======================================================= -->
+            <LinearLayout
+                android:id="@+id/layout_bedzeva"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp"
+                android:gravity="center"/>
+            <!-- ======================================================= -->
+            <!-- KRAJ PROMENE                                            -->
+            <!-- ======================================================= -->
 
             <!-- Username -->
             <TextView
@@ -234,17 +246,6 @@
                 android:scaleType="centerCrop"
                 android:layout_marginBottom="16dp"/>
 
-            <!-- Change Password Button
-            <Button
-                android:id="@+id/changePasswordBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Change Password"
-                android:layout_marginTop="24dp"
-                android:backgroundTint="@color/my_primary"
-                android:textColor="#FFFFFF"/>-->
-
-
             <!-- Friends section -->
             <TextView
                 android:id="@+id/friendsLabel"
@@ -267,27 +268,26 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 >
-            <Button
-                android:id="@+id/btnFindFriends"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Find Friends"
-                android:layout_marginTop="16dp"
-                android:layout_marginEnd="16dp"
-                android:backgroundTint="@color/my_primary"
-                android:textColor="#FFFFFF"/>
+                <Button
+                    android:id="@+id/btnFindFriends"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Find Friends"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:backgroundTint="@color/my_primary"
+                    android:textColor="#FFFFFF"/>
 
-            <Button
-                android:id="@+id/btnFriendRequests"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Friend Requests"
-                android:layout_marginTop="16dp"
-                android:backgroundTint="@color/my_primary"
-                android:textColor="#FFFFFF"/>
+                <Button
+                    android:id="@+id/btnFriendRequests"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Friend Requests"
+                    android:layout_marginTop="16dp"
+                    android:backgroundTint="@color/my_primary"
+                    android:textColor="#FFFFFF"/>
 
-        </LinearLayout>
-
+            </LinearLayout>
         </LinearLayout>
     </RelativeLayout>
 </ScrollView>

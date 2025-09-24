@@ -1,4 +1,4 @@
-package com.example.rpggame;
+package com.example.rpggame.domain;
 
 import android.os.Parcel;
 import android.os.Parcelable;

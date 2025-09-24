@@ -13,6 +13,8 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 
+import com.example.rpggame.domain.Kategorija;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -35,7 +37,6 @@ public class KategorijaDialog {
         final String[] izabranaBoja = {null};
         final List<ImageView> tackiceBoja = new ArrayList<>();
 
-        // Ako je izmena, popuni postojeća polja
         if (isEditMode) {
             builder.setTitle("Izmeni kategoriju");
             inputNaziv.setText(kategorijaZaIzmenu.getNaziv());
@@ -82,7 +83,7 @@ public class KategorijaDialog {
 
                     for (Kategorija postojeca : sveKategorije) {
                         if (isEditMode && postojeca.getId().equals(kategorijaZaIzmenu.getId())) {
-                            continue; // Preskoči proveru sa samim sobom u edit modu
+                            continue;
                         }
                         if (postojeca.getBoja().equalsIgnoreCase(izabranaBoja[0])) {
                             Toast.makeText(context, "Ova boja je već iskorišćena!", Toast.LENGTH_SHORT).show();
@@ -102,6 +103,30 @@ public class KategorijaDialog {
                     listener.onCategorySaved();
                 })
                 .setNegativeButton("Odustani", (dialog, id) -> dialog.cancel());
+
+        // Dodajemo "Obriši" dugme samo u Edit modu
+        if (isEditMode) {
+            builder.setNeutralButton("Obriši", (dialog, which) -> {
+                // Pre brisanja, prikaži novi dijalog za potvrdu
+                new AlertDialog.Builder(context)
+                        .setTitle("Potvrda brisanja")
+                        .setMessage("Da li ste sigurni da želite da obrišete kategoriju '" + kategorijaZaIzmenu.getNaziv() + "'?")
+                        .setPositiveButton("Obriši", (confirmDialog, confirmWhich) -> {
+                            // Proveri da li se kategorija koristi pre brisanja
+                            repository.getActiveTaskCountForCategory(kategorijaZaIzmenu.getId(), count -> {
+                                if (count > 0) {
+                                    Toast.makeText(context, "Nije moguće obrisati kategoriju jer je koristi " + count + " aktivnih zadataka.", Toast.LENGTH_LONG).show();
+                                } else {
+                                    repository.delete(kategorijaZaIzmenu);
+                                    Toast.makeText(context, "Kategorija obrisana.", Toast.LENGTH_SHORT).show();
+                                    listener.onCategorySaved(); // Pozovi listener da se osveži lista
+                                }
+                            });
+                        })
+                        .setNegativeButton("Odustani", null)
+                        .show();
+            });
+        }
 
         builder.create().show();
     }

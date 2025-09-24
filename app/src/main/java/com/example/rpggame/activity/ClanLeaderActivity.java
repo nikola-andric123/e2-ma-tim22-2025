@@ -7,17 +7,13 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.rpggame.FriendsAdapter;
 import com.example.rpggame.R;
+import com.example.rpggame.ZadatakRepository;
 import com.example.rpggame.domain.Friend;
 import com.example.rpggame.domain.Member;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -27,9 +23,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.WriteBatch;
-
 import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -40,24 +34,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class ClanLeaderActivity extends AppCompatActivity {
 
     private TextView clanNameText;
-    private Button deleteClanButton, showMembersButton, showOthersButton;
+    private Button deleteClanButton, showMembersButton, showOthersButton, btnZapocniMisiju;
     private RecyclerView friendsRecyclerView;
     private FloatingActionButton chatFab;
     private FriendsAdapter friendsAdapter;
     private List<Friend> friendsList = new ArrayList<>();
     private List<String> currentUsersFriendsList = new ArrayList<>();
-    private List<Member> clanMembers = new ArrayList<>();
-    private String createdClanId;
     private String currentUserUid;
 
     private FirebaseFirestore db;
     private FirebaseAuth auth;
     private String clanId, clanName, userId;
+    private ZadatakRepository repository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,54 +62,58 @@ public class ClanLeaderActivity extends AppCompatActivity {
         showOthersButton = findViewById(R.id.showOthersButton);
         friendsRecyclerView = findViewById(R.id.friendsRecyclerView);
         chatFab = findViewById(R.id.chatFab);
+        btnZapocniMisiju = findViewById(R.id.btn_zapocni_misiju);
 
         db = FirebaseFirestore.getInstance();
         auth = FirebaseAuth.getInstance();
         userId = auth.getCurrentUser().getUid();
         currentUserUid = auth.getCurrentUser().getUid();
+        repository = new ZadatakRepository(getApplication());
 
-        // Get clan data passed from previous activity
         clanId = getIntent().getStringExtra("clanId");
         clanName = getIntent().getStringExtra("clanName");
-
         clanNameText.setText(clanName);
 
-        // Setup RecyclerView
         friendsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         friendsAdapter = new FriendsAdapter(this, friendsList);
         friendsRecyclerView.setAdapter(friendsAdapter);
 
-        db.collection("users").document(currentUserUid).get().addOnSuccessListener( usr -> {
-                    usr.getReference()
-                            .collection("friends")
-                            .get()
-                            .addOnSuccessListener(friendsQuery -> {
-                                for (DocumentSnapshot friendDoc : friendsQuery) {
-                                   //Friend newFriend = friendDoc.toObject(Friend.class);
-                                   currentUsersFriendsList.add(friendDoc.getId());
-                                   /*if(Objects.equals(friendDoc.getString("clanId"), clanId)){
-                                       clanMembers.add(new Member(friendDoc.getId(),friendDoc.getString("role"),friendDoc.getString("username"),
-                                               friendDoc.getString("level"),friendDoc.getString("avatar")));
-                                   }*/
-                                }
-                                loadFriends(false);
-                            });
+        // Učitavanje prijatelja
+        db.collection("users").document(currentUserUid).collection("friends").get()
+                .addOnSuccessListener(friendsQuery -> {
+                    for (DocumentSnapshot friendDoc : friendsQuery) {
+                        currentUsersFriendsList.add(friendDoc.getId());
+                    }
+                    loadFriends(false);
                 });
-        //loadFriends(false); // default show all
 
-        // Delete clan button
         deleteClanButton.setOnClickListener(v -> showDeleteDialog());
-
-        // Filters
         showMembersButton.setOnClickListener(v -> loadFriends(true));
         showOthersButton.setOnClickListener(v -> loadFriends(false));
-
-        // Chat button
         chatFab.setOnClickListener(v -> {
             Intent intent = new Intent(this, ClanChatActivity.class);
             intent.putExtra("clanId", clanId);
             intent.putExtra("clanName", clanName);
             startActivity(intent);
+        });
+
+        btnZapocniMisiju.setOnClickListener(v -> {
+            v.setEnabled(false);
+            repository.getAktivnaMisijaZaSavez(clanId, misija -> {
+                if (misija != null) {
+                    Toast.makeText(this, "Misija za ovaj savez je već aktivna!", Toast.LENGTH_SHORT).show();
+                    v.setEnabled(true);
+                } else {
+                    repository.getUserProfile(userProfile -> {
+                        if (userProfile != null) {
+                            repository.startSpecijalnaMisija(userProfile, (success, message) -> {
+                                Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+                                v.setEnabled(true);
+                            });
+                        }
+                    });
+                }
+            });
         });
     }
 
@@ -126,31 +122,26 @@ public class ClanLeaderActivity extends AppCompatActivity {
             friendsList.clear();
             for (DocumentSnapshot doc : query) {
                 String uid = doc.getId();
-                if(!currentUsersFriendsList.contains(uid)) continue;
+                if (!currentUsersFriendsList.contains(uid)) continue;
                 String name = doc.getString("username");
                 String userClanId = doc.getString("clanId");
                 int level = doc.getLong("level") != null ? doc.getLong("level").intValue() : 0;
                 String avatar = doc.getString("avatar");
-
                 boolean isMember = clanId.equals(userClanId);
-                boolean isInvited = false; // TODO: check invitations collection if you store invites
 
                 if (onlyMembers && isMember) friendsList.add(new Friend(uid, name, avatar, level));
                 if (!onlyMembers && !isMember) friendsList.add(new Friend(uid, name, avatar, level));
-
-
             }
             friendsAdapter.notifyDataSetChanged();
-            if(onlyMembers) {
+            if (onlyMembers) {
                 friendsAdapter.setAlreadyMemberButton();
                 friendsAdapter.setMemberMode(FriendsAdapter.Mode.CLAN_MEMBER);
-            } else{
+            } else {
                 friendsAdapter.setInviteToClan();
                 friendsAdapter.setMode(FriendsAdapter.Mode.INVITE_TO_CLAN, this::sendClanInvite);
             }
         });
     }
-
     private void sendClanInvite(Friend friend) {
         if (clanId == null) {
             Toast.makeText(this, "Create clan first!", Toast.LENGTH_SHORT).show();

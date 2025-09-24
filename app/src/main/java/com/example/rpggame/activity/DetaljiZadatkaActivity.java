@@ -1,4 +1,4 @@
-package com.example.rpggame;
+package com.example.rpggame.activity;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -13,7 +13,11 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.rpggame.LevelUpHelper;
+import com.example.rpggame.R;
 import com.example.rpggame.domain.UserProfile;
+import com.example.rpggame.domain.Zadatak;
+import com.example.rpggame.ZadatakRepository;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -24,7 +28,7 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
     private TextView txtNaziv, txtOpis, txtTezina, txtBitnost, txtVreme;
     private Button btnUradjen, btnOtkazan, btnIzmeni, btnPauzirajAktiviraj, btnObrisi;
     private Zadatak trenutniZadatak;
-    private ZadatakRepository repository; // ISPRAVKA: Deklaracija koja je nedostajala
+    private ZadatakRepository repository;
     private ActivityResultLauncher<Intent> izmenaLauncher;
 
     @Override
@@ -32,7 +36,7 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detalji_zadatka);
 
-        repository = new ZadatakRepository(getApplication()); // ISPRAVKA: Inicijalizacija koja je nedostajala
+        repository = new ZadatakRepository(getApplication());
 
         izmenaLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -45,7 +49,6 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
                     }
                 });
 
-        // Povezivanje elemenata
         txtNaziv = findViewById(R.id.detalji_naziv);
         txtOpis = findViewById(R.id.detalji_opis);
         txtTezina = findViewById(R.id.detalji_tezina);
@@ -70,21 +73,32 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
 
     private void postaviListenere() {
         btnUradjen.setOnClickListener(v -> {
+            // --- POČETAK NOVE LOGIKE ---
+            // Provera da li je vreme zadatka prošlo
+            long sada = System.currentTimeMillis();
+            long vremeZadatka = trenutniZadatak.getDatumPocetka();
+
+            if (vremeZadatka > sada) {
+                Toast.makeText(this, "Ne možete kompletirati zadatak koji još nije počeo.", Toast.LENGTH_SHORT).show();
+                return; // Prekini dalje izvršavanje
+            }
+            // --- KRAJ NOVE LOGIKE ---
+
             btnUradjen.setEnabled(false);
             trenutniZadatak.setStatus(Zadatak.Status.URADJEN);
             repository.insert(trenutniZadatak);
 
             repository.getUserProfile(userProfile -> {
                 if (userProfile != null) {
+                    nanesiStetuZaZadatak(userProfile, trenutniZadatak);
                     boolean leveledUp = LevelUpHelper.addXpPointsAndCheckForLevelUp(userProfile, trenutniZadatak);
                     repository.updateUserProfile(userProfile);
                     Toast.makeText(this, "Zadatak označen kao URAĐEN!", Toast.LENGTH_SHORT).show();
 
                     if (leveledUp) {
                         Toast.makeText(this, "NOVI NIVO! Sledi borba sa bosom!", Toast.LENGTH_LONG).show();
-                        Intent intent = new Intent(DetaljiZadatkaActivity.this, EquipmentSelectionActivity.class);
+                        Intent intent = new Intent(DetaljiZadatkaActivity.this, BorbaActivity.class);
                         startActivity(intent);
-                        finish();
                         vratiRezultatNazad();
                     } else {
                         vratiRezultatNazad();
@@ -122,6 +136,27 @@ public class DetaljiZadatkaActivity extends AppCompatActivity {
 
         btnObrisi.setOnClickListener(v -> {
             prikaziDijalogZaPotvrduBrisanja();
+        });
+    }
+    private void nanesiStetuZaZadatak(UserProfile user, Zadatak zadatak) {
+        if (user.getClanId() == null || user.getClanId().isEmpty()) {
+            return;
+        }
+
+        ZadatakRepository.AkcijaMisije akcija;
+        Zadatak.Tezina tezina = zadatak.getTezina();
+        Zadatak.Bitnost bitnost = zadatak.getBitnost();
+
+        if (tezina == Zadatak.Tezina.VEOMA_LAK || tezina == Zadatak.Tezina.LAK || bitnost == Zadatak.Bitnost.NORMALAN || bitnost == Zadatak.Bitnost.VAZAN) {
+            akcija = ZadatakRepository.AkcijaMisije.LAKSI_ZADATAK;
+        } else {
+            akcija = ZadatakRepository.AkcijaMisije.TEZI_ZADATAK;
+        }
+
+        repository.nanesiStetuMisiji(user.getClanId(), akcija, zadatak, (success, message, damage) -> {
+            if (success) {
+                Toast.makeText(this, "Naneo si " + damage + " HP štete bosu misije!", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 

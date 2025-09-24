@@ -1,11 +1,8 @@
 package com.example.rpggame.domain;
 
 import com.example.rpggame.Enums.UserTitle;
-import com.example.rpggame.Zadatak;
+import com.example.rpggame.domain.Zadatak;
 import com.google.firebase.Timestamp;
-import com.google.type.DateTime;
-
-import java.sql.Time;
 
 public class UserProfile {
 
@@ -20,6 +17,13 @@ public class UserProfile {
     private String avatar;
     private String clanId;
     private Timestamp dateCreated;
+    private String fcmToken; // NOVO POLJE
+    private Timestamp lastQuotaReset; // Datum kada su dnevne/nedeljne/mesečne kvote poslednji put resetovane
+    private int dailyVeryEasyNormalCount = 0;
+    private int dailyEasyImportantCount = 0;
+    private int dailyHardExtremelyImportantCount = 0;
+    private int weeklyExtremelyHardCount = 0;
+    private int monthlySpecialCount = 0;
 
     public UserProfile(){
 
@@ -37,6 +41,7 @@ public class UserProfile {
         this.avatar = avatar;
         this.dateCreated = dateCreated;
         this.clanId = "";
+        this.fcmToken = ""; // Inicijalizujemo kao prazno
     }
 
     public Timestamp getDateCreated() {
@@ -91,6 +96,16 @@ public class UserProfile {
         return experiencePoints;
     }
 
+    // NOVI GETTER I SETTER za fcmToken
+    public String getFcmToken() {
+        return fcmToken;
+    }
+
+    public void setFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
+    }
+
+    // Metoda addXpPoints ostaje nepromenjena
     public void addXpPoints(Zadatak zadatak){
         int currentLevel = 1;
         int beginningXP;
@@ -110,8 +125,6 @@ public class UserProfile {
                             for(int x=1; x<=currentLevel;x++){
                                 newXp = newXp + (int) Math.ceil(0.5 * newXp);
                             }
-                            //int previous = (int) Math.ceil((2.0/3.0) * (currentLevel+1));
-                            //this.experiencePoints += previous + (int) Math.ceil(0.5*previous);
                             this.experiencePoints += newXp;
                             break;
                         } else{
@@ -132,8 +145,6 @@ public class UserProfile {
                             for(int x=1; x<=currentLevel;x++){
                                 newXp = newXp + (int) Math.ceil(0.5 * newXp);
                             }
-                            //int previous = (int) Math.ceil((2.0/3.0) * (currentLevel+1));
-                            //this.experiencePoints += previous + (int) Math.ceil(0.5*previous);
                             this.experiencePoints += newXp;
                             break;
                         } else{
@@ -154,8 +165,6 @@ public class UserProfile {
                             for(int x=1; x<=currentLevel;x++){
                                 newXp = newXp + (int) Math.ceil(0.5 * newXp);
                             }
-                            //int previous = (int) Math.ceil((2.0/3.0) * (currentLevel+1));
-                            //this.experiencePoints += previous + (int) Math.ceil(0.5*previous);
                             this.experiencePoints += newXp;
                             break;
                         } else{
@@ -176,8 +185,6 @@ public class UserProfile {
                             for(int x=1; x<=currentLevel;x++){
                                 newXp = newXp + (int) Math.ceil(0.5 * newXp);
                             }
-                            //int previous = (int) Math.ceil((2.0/3.0) * (currentLevel+1));
-                            //this.experiencePoints += previous + (int) Math.ceil(0.5*previous);
                             this.experiencePoints += newXp;
                             break;
                         } else{
@@ -204,8 +211,6 @@ public class UserProfile {
                             for(int x=1; x<=currentLevel;x++){
                                 newXp = newXp + (int) Math.ceil(0.5 * newXp);
                             }
-                            //int previous = (int) Math.ceil((2.0/3.0) * (currentLevel+1));
-                            //this.experiencePoints += previous + (int) Math.ceil(0.5*previous);
                             this.experiencePoints += newXp;
                             break;
                         } else{
@@ -226,8 +231,6 @@ public class UserProfile {
                             for(int x=1; x<=currentLevel;x++){
                                 newXp = newXp + (int) Math.ceil(0.5 * newXp);
                             }
-                            //int previous = (int) Math.ceil((2.0/3.0) * (currentLevel+1));
-                            //this.experiencePoints += previous + (int) Math.ceil(0.5*previous);
                             this.experiencePoints += newXp;
                             break;
                         } else{
@@ -237,7 +240,7 @@ public class UserProfile {
                 }
                 break;
             case TEZAK:
-                beginningXP = 10;
+                beginningXP = 7; // ISPRAVKA VREDNOSTI PREMA SPECIFIKACIJI
                 if(this.level == 0){
                     this.experiencePoints += beginningXP;
 
@@ -248,8 +251,6 @@ public class UserProfile {
                             for(int x=1; x<=currentLevel;x++){
                                 newXp = newXp + (int) Math.ceil(0.5 * newXp);
                             }
-                            //int previous = (int) Math.ceil((2.0/3.0) * (currentLevel+1));
-                            //this.experiencePoints += previous + (int) Math.ceil(0.5*previous);
                             this.experiencePoints += newXp;
                             break;
                         } else{
@@ -259,7 +260,7 @@ public class UserProfile {
                 }
                 break;
             case EKSTREMNO_TEZAK:
-                beginningXP = 100;
+                beginningXP = 20; // ISPRAVKA VREDNOSTI PREMA SPECIFIKACIJI
                 if(this.level == 0){
                     this.experiencePoints += beginningXP;
 
@@ -270,8 +271,6 @@ public class UserProfile {
                             for(int x=1; x<=currentLevel;x++){
                                 newXp = newXp + (int) Math.ceil(0.5 * newXp);
                             }
-                            //int previous = (int) Math.ceil((2.0/3.0) * (currentLevel+1));
-                            //this.experiencePoints += previous + (int) Math.ceil(0.5*previous);
                             this.experiencePoints += newXp;
                             break;
                         } else{
@@ -289,30 +288,24 @@ public class UserProfile {
                 this.title = UserTitle.INTERMEDIATE;
             }
         }else{
-            int currentPoints = 500;
-            int currentPP = 70;
-            while(true){
-                if(this.level == currentLevel){
-                    if(this.experiencePoints >= currentPoints){
-                        this.level += 1;
-                        this.powerPoints += currentPP;
-                        if(this.level == 2){
-                            this.title = UserTitle.SENIOR;
-                        } else if (this.level == 3) {
-                            this.title = UserTitle.EXPERT;
-                        }
-                        break;
-                    }else{
-                        break;
-                    }
-                }else{
-                    currentLevel++;
-                    currentPoints += (int) (Math.ceil((5.0/2.0) * (double) currentPoints/100.0) * 100);
-                    currentPP += (int) ((7.0/4.0) * currentPP);
+            int requiredXP = 200;
+            int currentPP = 40;
+            for(int i=1;i<=this.level;i++){
+                requiredXP = (requiredXP * 2) + (requiredXP / 2);
+                requiredXP = (int) (Math.ceil(requiredXP / 100.0) * 100);
+                currentPP += (int) (currentPP * 0.75);
+            }
+
+            if(this.experiencePoints >= requiredXP){
+                this.level += 1;
+                this.powerPoints += currentPP;
+                if(this.level == 2){
+                    this.title = UserTitle.SENIOR;
+                } else if (this.level == 3) {
+                    this.title = UserTitle.EXPERT;
                 }
             }
         }
-
     }
 
     public void setExperiencePoints(int experiencePoints) {
@@ -350,4 +343,16 @@ public class UserProfile {
     public void setAvatar(String avatar) {
         this.avatar = avatar;
     }
+    public Timestamp getLastQuotaReset() { return lastQuotaReset; }
+    public void setLastQuotaReset(Timestamp lastQuotaReset) { this.lastQuotaReset = lastQuotaReset; }
+    public int getDailyVeryEasyNormalCount() { return dailyVeryEasyNormalCount; }
+    public void setDailyVeryEasyNormalCount(int dailyVeryEasyNormalCount) { this.dailyVeryEasyNormalCount = dailyVeryEasyNormalCount; }
+    public int getDailyEasyImportantCount() { return dailyEasyImportantCount; }
+    public void setDailyEasyImportantCount(int dailyEasyImportantCount) { this.dailyEasyImportantCount = dailyEasyImportantCount; }
+    public int getDailyHardExtremelyImportantCount() { return dailyHardExtremelyImportantCount; }
+    public void setDailyHardExtremelyImportantCount(int dailyHardExtremelyImportantCount) { this.dailyHardExtremelyImportantCount = dailyHardExtremelyImportantCount; }
+    public int getWeeklyExtremelyHardCount() { return weeklyExtremelyHardCount; }
+    public void setWeeklyExtremelyHardCount(int weeklyExtremelyHardCount) { this.weeklyExtremelyHardCount = weeklyExtremelyHardCount; }
+    public int getMonthlySpecialCount() { return monthlySpecialCount; }
+    public void setMonthlySpecialCount(int monthlySpecialCount) { this.monthlySpecialCount = monthlySpecialCount; }
 }

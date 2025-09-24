@@ -1,9 +1,12 @@
-package com.example.rpggame;
+package com.example.rpggame.dao;
 
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+
+import com.example.rpggame.domain.Boss;
+
 import java.util.List;
 
 @Dao
