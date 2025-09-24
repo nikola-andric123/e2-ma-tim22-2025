@@ -18,6 +18,12 @@ public class UserProfile {
     private String clanId;
     private Timestamp dateCreated;
     private String fcmToken; // NOVO POLJE
+    private Timestamp lastQuotaReset; // Datum kada su dnevne/nedeljne/mesečne kvote poslednji put resetovane
+    private int dailyVeryEasyNormalCount = 0;
+    private int dailyEasyImportantCount = 0;
+    private int dailyHardExtremelyImportantCount = 0;
+    private int weeklyExtremelyHardCount = 0;
+    private int monthlySpecialCount = 0;
 
     public UserProfile(){
 
@@ -337,4 +343,16 @@ public class UserProfile {
     public void setAvatar(String avatar) {
         this.avatar = avatar;
     }
+    public Timestamp getLastQuotaReset() { return lastQuotaReset; }
+    public void setLastQuotaReset(Timestamp lastQuotaReset) { this.lastQuotaReset = lastQuotaReset; }
+    public int getDailyVeryEasyNormalCount() { return dailyVeryEasyNormalCount; }
+    public void setDailyVeryEasyNormalCount(int dailyVeryEasyNormalCount) { this.dailyVeryEasyNormalCount = dailyVeryEasyNormalCount; }
+    public int getDailyEasyImportantCount() { return dailyEasyImportantCount; }
+    public void setDailyEasyImportantCount(int dailyEasyImportantCount) { this.dailyEasyImportantCount = dailyEasyImportantCount; }
+    public int getDailyHardExtremelyImportantCount() { return dailyHardExtremelyImportantCount; }
+    public void setDailyHardExtremelyImportantCount(int dailyHardExtremelyImportantCount) { this.dailyHardExtremelyImportantCount = dailyHardExtremelyImportantCount; }
+    public int getWeeklyExtremelyHardCount() { return weeklyExtremelyHardCount; }
+    public void setWeeklyExtremelyHardCount(int weeklyExtremelyHardCount) { this.weeklyExtremelyHardCount = weeklyExtremelyHardCount; }
+    public int getMonthlySpecialCount() { return monthlySpecialCount; }
+    public void setMonthlySpecialCount(int monthlySpecialCount) { this.monthlySpecialCount = monthlySpecialCount; }
 }

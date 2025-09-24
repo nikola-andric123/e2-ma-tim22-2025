@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -29,7 +28,9 @@ import org.threeten.bp.LocalDate;
 import org.threeten.bp.ZoneId;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +45,6 @@ public class KalendarFragment extends Fragment {
 
     private List<Zadatak> sviZadaci = new ArrayList<>();
     private List<Kategorija> sveKategorijeIzBaze = new ArrayList<>();
-
     private ActivityResultLauncher<Intent> detaljiLauncher;
 
     @Override
@@ -61,8 +61,7 @@ public class KalendarFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_kalendar, container, false);
         calendarView = view.findViewById(R.id.calendarView);
         recyclerView = view.findViewById(R.id.recyclerViewKalendarZadaci);
@@ -106,50 +105,60 @@ public class KalendarFragment extends Fragment {
             sviZadaci = zadaci;
             calendarView.removeDecorators();
 
-            // --- POČETAK NOVE LOGIKE ZA BOJE ---
+            // --- POČETAK NOVE ISPRAVLJENE LOGIKE ---
 
-            // 1. Kreiramo mapu za lakši pronalazak kategorije po ID-ju
+            // Mapa koja čuva dane koje treba obojiti, grupisane po boji
+            Map<Integer, HashSet<CalendarDay>> daniPoBoji = new HashMap<>();
+            // Mapa za lakši pronalazak kategorije po ID-ju
             Map<String, Kategorija> mapaKategorija = sveKategorijeIzBaze.stream()
                     .collect(Collectors.toMap(Kategorija::getId, kategorija -> kategorija));
 
-            // 2. Grupišemo sve zadatke po datumu
-            Map<LocalDate, List<Zadatak>> zadaciPoDanima = sviZadaci.stream()
-                    .collect(Collectors.groupingBy(zadatak ->
-                            Instant.ofEpochMilli(zadatak.getDatumPocetka())
-                                    .atZone(ZoneId.systemDefault())
-                                    .toLocalDate()));
+            // Prolazimo kroz sve zadatke iz baze
+            for (Zadatak zadatak : sviZadaci) {
+                // Pronađi boju za ovaj zadatak
+                Kategorija kategorija = mapaKategorija.get(zadatak.getKategorijaId());
+                int boja = Color.GRAY; // Default boja
+                if (kategorija != null) {
+                    try {
+                        boja = Color.parseColor(kategorija.getBoja());
+                    } catch (Exception e) { /* ostaje siva */ }
+                }
 
-            // 3. Kreiramo listu dekoratora, po jedan za svaki dan koji ima zadatke
-            List<DayViewDecorator> dekoratori = new ArrayList<>();
-            for (Map.Entry<LocalDate, List<Zadatak>> entry : zadaciPoDanima.entrySet()) {
-                LocalDate dan = entry.getKey();
-                List<Zadatak> zadaciNaDan = entry.getValue();
+                // Ako zadatak nije ponavljajući, dodaj samo jedan dan
+                if (!zadatak.isPonavljajuci()) {
+                    LocalDate dan = Instant.ofEpochMilli(zadatak.getDatumPocetka()).atZone(ZoneId.systemDefault()).toLocalDate();
+                    daniPoBoji.computeIfAbsent(boja, k -> new HashSet<>()).add(CalendarDay.from(dan));
+                } else {
+                    // Ako je ponavljajući, izračunaj sve datume
+                    Calendar iterator = Calendar.getInstance();
+                    iterator.setTimeInMillis(zadatak.getDatumPocetka());
 
-                if (!zadaciNaDan.isEmpty()) {
-                    // Uzimamo kategoriju prvog zadatka u danu
-                    Zadatak prviZadatak = zadaciNaDan.get(0);
-                    Kategorija kategorija = mapaKategorija.get(prviZadatak.getKategorijaId());
+                    long krajnjiDatum = zadatak.getDatumZavrsetka();
 
-                    int boja = Color.GRAY; // Default boja ako nešto krene naopako
-                    if (kategorija != null) {
-                        try {
-                            boja = Color.parseColor(kategorija.getBoja());
-                        } catch (Exception e) {
-                            // ostaje siva ako je heks kod pogrešan
+                    while (iterator.getTimeInMillis() <= krajnjiDatum) {
+                        LocalDate dan = Instant.ofEpochMilli(iterator.getTimeInMillis()).atZone(ZoneId.systemDefault()).toLocalDate();
+                        daniPoBoji.computeIfAbsent(boja, k -> new HashSet<>()).add(CalendarDay.from(dan));
+
+                        // Pomeri iterator za sledeći datum
+                        if (zadatak.getTipPonavljanja() == Zadatak.TipPonavljanja.DAN) {
+                            iterator.add(Calendar.DAY_OF_YEAR, zadatak.getIntervalPonavljanja());
+                        } else if (zadatak.getTipPonavljanja() == Zadatak.TipPonavljanja.NEDELJA) {
+                            iterator.add(Calendar.WEEK_OF_YEAR, zadatak.getIntervalPonavljanja());
+                        } else {
+                            break; // Nepoznat tip, prekini petlju
                         }
                     }
-
-                    // Kreiramo dekorator sa specifičnom bojom samo za taj jedan dan
-                    HashSet<CalendarDay> danSet = new HashSet<>();
-                    danSet.add(CalendarDay.from(dan));
-                    dekoratori.add(new EventDecorator(boja, danSet));
                 }
             }
 
-            // 4. Dodajemo sve kreirane dekoratore na kalendar
+            // Kreiraj dekoratore za svaku boju
+            List<DayViewDecorator> dekoratori = new ArrayList<>();
+            for (Map.Entry<Integer, HashSet<CalendarDay>> entry : daniPoBoji.entrySet()) {
+                dekoratori.add(new EventDecorator(entry.getKey(), entry.getValue()));
+            }
             calendarView.addDecorators(dekoratori);
 
-            // --- KRAJ NOVE LOGIKE ZA BOJE ---
+            // --- KRAJ NOVE ISPRAVLJENE LOGIKE ---
 
             prikaziZadatkeZaDan(calendarView.getSelectedDate());
         });
@@ -159,13 +168,43 @@ public class KalendarFragment extends Fragment {
         if (dan == null) {
             dan = CalendarDay.today();
         }
+
         LocalDate izabraniDatum = dan.getDate();
-        List<Zadatak> zadaciZaDan = sviZadaci.stream().filter(zadatak -> {
-            LocalDate datumZadatka = Instant.ofEpochMilli(zadatak.getDatumPocetka())
-                    .atZone(ZoneId.systemDefault())
-                    .toLocalDate();
-            return datumZadatka.equals(izabraniDatum);
-        }).collect(Collectors.toList());
+        List<Zadatak> zadaciZaDan = new ArrayList<>();
+
+        // Prolazimo kroz sve zadatke i proveravamo da li se neki od njih dešava na izabrani dan
+        for (Zadatak zadatak : sviZadaci) {
+            if (!zadatak.isPonavljajuci()) {
+                LocalDate datumZadatka = Instant.ofEpochMilli(zadatak.getDatumPocetka()).atZone(ZoneId.systemDefault()).toLocalDate();
+                if (datumZadatka.equals(izabraniDatum)) {
+                    zadaciZaDan.add(zadatak);
+                }
+            } else {
+                Calendar iterator = Calendar.getInstance();
+                iterator.setTimeInMillis(zadatak.getDatumPocetka());
+                long krajnjiDatum = zadatak.getDatumZavrsetka();
+
+                while (iterator.getTimeInMillis() <= krajnjiDatum) {
+                    LocalDate trenutniDatum = Instant.ofEpochMilli(iterator.getTimeInMillis()).atZone(ZoneId.systemDefault()).toLocalDate();
+                    if (trenutniDatum.equals(izabraniDatum)) {
+                        zadaciZaDan.add(zadatak);
+                        break; // Našli smo da se dešava, ne moramo dalje da proveravamo za ovaj zadatak
+                    }
+                    if (trenutniDatum.isAfter(izabraniDatum)) {
+                        break; // Preskočili smo izabrani datum, nema potrebe dalje proveravati
+                    }
+
+                    if (zadatak.getTipPonavljanja() == Zadatak.TipPonavljanja.DAN) {
+                        iterator.add(Calendar.DAY_OF_YEAR, zadatak.getIntervalPonavljanja());
+                    } else if (zadatak.getTipPonavljanja() == Zadatak.TipPonavljanja.NEDELJA) {
+                        iterator.add(Calendar.WEEK_OF_YEAR, zadatak.getIntervalPonavljanja());
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+
         adapter.updateZadaci(zadaciZaDan);
     }
 }
@@ -186,6 +225,6 @@ class EventDecorator implements DayViewDecorator {
 
     @Override
     public void decorate(DayViewFacade view) {
-        view.addSpan(new DotSpan(8, color)); // Malo sam povećao tačkicu
+        view.addSpan(new DotSpan(8, color));
     }
 }
