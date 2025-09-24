@@ -62,6 +62,13 @@ public class ShopFragment extends Fragment {
         repository = new ZadatakRepository(getActivity().getApplication());
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
+        loadData(view);
+
+
+
+
+    }
+    private void loadData(View view){
         currentUser = mAuth.getCurrentUser();
         oneTimePotion20 = view.findViewById(R.id.one_time_20);
         oneTimePotion40 = view.findViewById(R.id.one_time_40);
@@ -98,18 +105,16 @@ public class ShopFragment extends Fragment {
                                     // No items at all
                                     disableButton(swordBtn);
                                     disableButton(bowArrowBtn);
-                                    disableButton(glovesBtn);
-                                    disableButton(shieldBtn);
-                                    disableButton(bootsBtn);
+
                                     return;
                                 }
 
                                 for (DocumentSnapshot inventoryItem : querySnapshot) {
                                     String name = inventoryItem.getString("name");
                                     String category = inventoryItem.getString("category");
-                                    Long quantity = inventoryItem.getLong("quantity");
+                                    //Long quantity = inventoryItem.getLong("quantity");
 
-                                    boolean hasItem = (quantity != null && quantity > 0);
+                                    boolean hasItem = (name != null);
 
                                     if ("sword".equalsIgnoreCase(name)) {
                                         if (hasItem && currentUserProfile.getCollectedCoins() >= upgradeSword) enableButton(swordBtn); else disableButton(swordBtn);
@@ -119,17 +124,6 @@ public class ShopFragment extends Fragment {
                                         if (hasItem && currentUserProfile.getCollectedCoins() >= upgradeBow) enableButton(bowArrowBtn); else disableButton(bowArrowBtn);
                                     }
 
-                                    if ("gloves".equalsIgnoreCase(name)) {
-                                        if (hasItem) enableButton(glovesBtn); else disableButton(glovesBtn);
-                                    }
-
-                                    if ("shield".equalsIgnoreCase(name)) {
-                                        if (hasItem) enableButton(shieldBtn); else disableButton(shieldBtn);
-                                    }
-
-                                    if ("boots".equalsIgnoreCase(name)) {
-                                        if (hasItem) enableButton(bootsBtn); else disableButton(bootsBtn);
-                                    }
 
                                     // You can also check by category if needed
                                     if ("weapon".equalsIgnoreCase(category)) {
@@ -177,14 +171,23 @@ public class ShopFragment extends Fragment {
                     if (currentUserProfile.getCollectedCoins() < priceGloves) {
                         glovesBtn.setEnabled(false);
                         glovesBtn.setAlpha(0.5f);
+                    }else{
+                        glovesBtn.setEnabled(true);
+                        glovesBtn.setAlpha(1.0f);
                     }
                     if (currentUserProfile.getCollectedCoins() < priceShield) {
                         shieldBtn.setEnabled(false);
                         shieldBtn.setAlpha(0.5f);
+                    }else{
+                        shieldBtn.setEnabled(true);
+                        shieldBtn.setAlpha(1.0f);
                     }
                     if (currentUserProfile.getCollectedCoins() < priceBoots) {
                         bootsBtn.setEnabled(false);
                         bootsBtn.setAlpha(0.5f);
+                    } else{
+                        bootsBtn.setEnabled(true);
+                        bootsBtn.setAlpha(1.0f);
                     }
                     if (currentUserProfile.getCollectedCoins() < upgradeSword) {
                         swordBtn.setEnabled(false);
@@ -289,10 +292,6 @@ public class ShopFragment extends Fragment {
                                             double newPower = currentPower + 0.01;
 
                                             upgradeWeapon("Sword","powerIncreasePercent", newPower, userUID, upgradeSword);
-                                        } else {
-                                            Toast.makeText(getContext(),
-                                                    "You don’t have a sword to upgrade!",
-                                                    Toast.LENGTH_SHORT).show();
                                         }
                                     }
 
@@ -311,10 +310,6 @@ public class ShopFragment extends Fragment {
                                             double newLoot = currentLoot + 0.01;
 
                                             upgradeWeapon("bow_and_arrow","coinsIncreasePercent", newLoot, userUID,upgradeBow);
-                                        } else {
-                                            Toast.makeText(getContext(),
-                                                    "You don’t have a bow to upgrade!",
-                                                    Toast.LENGTH_SHORT).show();
                                         }
                                     }
 
@@ -322,10 +317,6 @@ public class ShopFragment extends Fragment {
                     });
 
                 });
-
-
-
-
     }
     // helper functions
     private void disableButton(Button btn) {
@@ -353,16 +344,17 @@ public class ShopFragment extends Fragment {
                                         // Deduct coins after upgrade succeeds
                                         db.collection("users").document(userUID)
                                                 .update("collectedCoins", FieldValue.increment(-price))
-                                                .addOnSuccessListener(v ->
-                                                        Toast.makeText(getContext(), weapon + " upgraded! -" + price + " coins", Toast.LENGTH_SHORT).show()
+                                                .addOnSuccessListener(v -> {
+
+                                                    loadData(requireView());
+                                                        }
+
                                                 )
                                                 .addOnFailureListener(e ->
                                                         Toast.makeText(getContext(), "Failed to update coins: " + e.getMessage(), Toast.LENGTH_SHORT).show()
                                                 );
-                                    })
-                                    .addOnFailureListener(e ->
-                                            Toast.makeText(getContext(), "Failed to upgrade " + weapon + ": " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                                    );
+                                    });
+
                         }
                     } else {
                         Toast.makeText(getContext(), "Weapon " + weapon + " not found in inventory", Toast.LENGTH_SHORT).show();
@@ -392,7 +384,8 @@ public class ShopFragment extends Fragment {
 
                         inventoryRef.add(potionVal)
                                 .addOnSuccessListener(docRef -> {
-                                    Toast.makeText(getContext(), "Potion bought!", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getContext(), "Item bought!", Toast.LENGTH_SHORT).show();
+
                                     if (currentUserProfile.getClanId() != null && !currentUserProfile.getClanId().isEmpty()) {
                                         repository.nanesiStetuMisiji(currentUserProfile.getClanId(), ZadatakRepository.AkcijaMisije.KUPOVINA, null, (success, message, damage) -> {
                                             if (success) {
@@ -402,6 +395,7 @@ public class ShopFragment extends Fragment {
                                             }
                                         });
                                     }
+                                    loadData(requireView());
                                 })
                                 .addOnFailureListener(e -> {
                                     Toast.makeText(getContext(), "Failed to add potion: " + e.getMessage(), Toast.LENGTH_SHORT).show();

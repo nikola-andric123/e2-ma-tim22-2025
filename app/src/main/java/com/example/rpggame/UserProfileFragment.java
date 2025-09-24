@@ -273,10 +273,15 @@ public class UserProfileFragment extends Fragment {
         layoutBedzeva.removeAllViews();
 
         if (brojBedzeva > 0) {
+            if(!isAdded()){
+                return;
+            }
             layoutBedzeva.setVisibility(View.VISIBLE);
             // Ponavljaj onoliko puta koliko ima bedževa
             for (int i = 0; i < brojBedzeva; i++) {
-                ImageView badgeImageView = new ImageView(getContext());
+
+                    ImageView badgeImageView = new ImageView(requireActivity());
+
                 // Postavi sliku bedža (koristimo uvek istu sliku)
                 badgeImageView.setImageResource(R.drawable.badge_icon);
 

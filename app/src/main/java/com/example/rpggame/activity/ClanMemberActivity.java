@@ -96,12 +96,38 @@ public class ClanMemberActivity extends AppCompatActivity {
     }
 
     private void showLeaveDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("Leave Clan")
-                .setMessage("Are you sure you want to leave this clan?")
-                .setPositiveButton("Leave", (dialog, which) -> leaveClan())
-                .setNegativeButton("Cancel", null)
-                .show();
+        db.collection("missions")
+                .whereEqualTo("idSaveza", clanId)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    boolean activeMission = false;
+
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        String status = doc.getString("status");
+                        if ("AKTIVNA".equals(status)) {   // or whatever value means it's ongoing
+                            activeMission = true;
+                            break;
+                        }
+                    }
+
+                    if (activeMission) {
+                        new AlertDialog.Builder(this)
+                                .setTitle("You cannot leave now!")
+                                .setMessage("You cannot leave clan while clan mission is active.")
+                                .show();
+                    } else {
+                        new AlertDialog.Builder(this)
+                                .setTitle("Leave Clan")
+                                .setMessage("Are you sure you want to leave this clan?")
+                                .setPositiveButton("Leave", (dialog, which) -> leaveClan())
+                                .setNegativeButton("Cancel", null)
+                                .show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to check mission: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+
     }
 
     private void leaveClan() {

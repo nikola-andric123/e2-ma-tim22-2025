@@ -41,7 +41,16 @@ public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.Inve
         if ("clothes".equals(item.getCategory()) && item.getDurability() != null) {
             holder.extra.setText("Durability: " + item.getDurability());
             holder.extra.setVisibility(View.VISIBLE);
-        } else {
+        } else if("weapon".equals(item.getCategory())){
+            if("Sword".equals(item.getName())) {
+                holder.extra.setText("Power Increase Percent: " + item.getPowerIncreasePercent() + "%");
+                holder.extra.setVisibility(View.VISIBLE);
+            } else{
+                holder.extra.setText("Coins Increase Percent: " + item.getCoinsIncreasePercent() + "%");
+                holder.extra.setVisibility(View.VISIBLE);
+            }
+        }
+        else {
             holder.extra.setVisibility(View.GONE);
         }
 

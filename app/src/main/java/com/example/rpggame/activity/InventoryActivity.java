@@ -61,7 +61,22 @@ public class InventoryActivity extends AppCompatActivity {
                         item.setCategory(category);
                         item.setName(name);
                         if(category.equals("clothes")){
-                            item.setDurability(Objects.requireNonNull(doc.getDouble("durability")).longValue());
+                            Double durabilityVal = doc.getDouble("durability");
+                            if (durabilityVal != null) {
+                                item.setDurability(durabilityVal.longValue());
+                            } else {
+                                item.setDurability(null); // or maybe 0L if you prefer default
+                            }
+                        }
+                        if(category.equals("weapon")){
+                            if(name.equalsIgnoreCase("Sword")){
+                                Double power = doc.getDouble("powerIncreasePercent");
+                                item.setPowerIncreasePercent(power);
+                            }else if(name.equalsIgnoreCase("bow_and_arrow")){
+                                Double power = doc.getDouble("coinsIncreasePercent");
+                                item.setCoinsIncreasePercent(power);
+                            }
+
                         }
                         inventoryList.add(item);
                     }

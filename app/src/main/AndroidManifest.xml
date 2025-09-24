@@ -41,6 +41,12 @@
             android:name=".activity.EquipmentSelectionActivity"
             android:exported="false" />
         <activity
+            android:name=".activity.InventoryActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.OtherUsersProfileActivity"
+            android:exported="false" />
+        <activity
             android:name=".activity.BorbaActivity"
             android:exported="false" />
         <activity
