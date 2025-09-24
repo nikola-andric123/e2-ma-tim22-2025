@@ -23,6 +23,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Transaction;
 import com.google.firebase.firestore.WriteBatch;
@@ -30,8 +31,10 @@ import com.google.firebase.firestore.WriteBatch;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -51,6 +54,7 @@ public class ZadatakRepository {
     private Application application;
     private ExecutorService executorService;
     private Handler mainThreadHandler;
+    public interface OnMissionEndedListener { void onMissionEnded(String message); }
     public interface OnClanLoadedListener { void onClanLoaded(Clan clan); }
     public interface OnMissionStartedListener { void onMissionStarted(boolean success, String message); }
     public interface OnDamageAppliedListener { void onDamageApplied(boolean success, String message, int damage); }
@@ -95,6 +99,75 @@ public class ZadatakRepository {
             final List<Zadatak> zadaci = zadatakDao.getZadatkeOd(timestamp);
             mainThreadHandler.post(() -> listener.onTasksLoaded(zadaci));
         });
+    }
+    public void zavrsiSpecijalnuMisiju(SpecijalnaMisija misija, OnMissionEndedListener listener) {
+        if (misija == null) {
+            listener.onMissionEnded("Greška: Misija ne postoji.");
+            return;
+        }
+
+        DocumentReference misijaRef = db.collection("missions").document(misija.getId());
+
+        if (misija.getHpBosa() <= 0) {
+            db.collection("missions").document(misija.getId()).collection("clanProgress").get()
+                    .addOnSuccessListener(clanProgressQuery -> {
+                        if (clanProgressQuery.isEmpty()) {
+                            listener.onMissionEnded("Greška: Nema članova u misiji.");
+                            return;
+                        }
+
+                        WriteBatch batch = db.batch();
+                        List<Task<DocumentSnapshot>> userProfileTasks = new ArrayList<>();
+
+                        for (DocumentSnapshot progressDoc : clanProgressQuery) {
+                            userProfileTasks.add(db.collection("users").document(progressDoc.getId()).get());
+                        }
+
+                        Tasks.whenAllSuccess(userProfileTasks).addOnSuccessListener(results -> {
+                            for (Object result : results) {
+                                DocumentSnapshot userDoc = (DocumentSnapshot) result;
+                                UserProfile userProfile = userDoc.toObject(UserProfile.class);
+                                if (userProfile != null) {
+                                    int nagradaZaNaredniNivo = izracunajNovcice(userProfile.getLevel() + 1);
+                                    int dobijeniNovcici = nagradaZaNaredniNivo / 2;
+
+                                    // ISPRAVKA: Koristimo userDoc.getId() umesto userProfile.getId()
+                                    DocumentReference userRef = db.collection("users").document(userDoc.getId());
+                                    batch.update(userRef, "collectedCoins", FieldValue.increment(dobijeniNovcici));
+                                    batch.update(userRef, "numberOfBadges", FieldValue.increment(1));
+
+                                    Map<String, Object> napitak = new HashMap<>();
+                                    napitak.put("name", "Specijalni napitak misije");
+                                    napitak.put("category", "potion");
+                                    batch.set(userRef.collection("inventory").document(), napitak);
+
+                                    Map<String, Object> odeca = new HashMap<>();
+                                    odeca.put("name", "Odeća iz misije");
+                                    odeca.put("category", "clothes");
+                                    batch.set(userRef.collection("inventory").document(), odeca);
+                                }
+                            }
+
+                            batch.update(misijaRef, "status", "ZAVRSENA_USPESNO");
+                            batch.commit().addOnSuccessListener(aVoid -> listener.onMissionEnded("Misija uspešno završena! Svi članovi su nagrađeni."));
+
+                        }).addOnFailureListener(e -> listener.onMissionEnded("Greška pri učitavanju profila članova."));
+                    });
+        } else {
+            misijaRef.update("status", "ZAVRSENA_NEUSPESNO")
+                    .addOnSuccessListener(aVoid -> listener.onMissionEnded("Misija je završena neuspešno."))
+                    .addOnFailureListener(e -> listener.onMissionEnded("Greška pri ažuriranju statusa misije."));
+        }
+    }
+
+    private int izracunajNovcice(int nivoKorisnika) {
+        if (nivoKorisnika <= 0) nivoKorisnika = 1;
+        if (nivoKorisnika == 1) return 200;
+        double novcici = 200;
+        for (int i = 2; i <= nivoKorisnika; i++) {
+            novcici *= 1.20;
+        }
+        return (int) Math.round(novcici);
     }
     public void getAktivnaMisijaZaSavez(String clanId, OnMissionLoadedListener listener) {
         if (clanId == null || clanId.isEmpty()) {
@@ -189,7 +262,8 @@ public class ZadatakRepository {
                         misija.setMaksHpBosa(100 * memberIds.size());
                         misija.setHpBosa(misija.getMaksHpBosa());
                         misija.setDatumPocetka(new Timestamp(new Date()));
-                        misija.setDatumZavrsetka(new Timestamp(new Date(System.currentTimeMillis() + 14L * 24 * 60 * 60 * 1000)));
+                        long trajanjeMilis = 2 * 60 * 1000;
+                        misija.setDatumZavrsetka(new Timestamp(new Date(System.currentTimeMillis() + trajanjeMilis)));
 
                         WriteBatch batch = db.batch();
                         DocumentReference misijaRef = db.collection("missions").document();
@@ -209,7 +283,7 @@ public class ZadatakRepository {
                         }
 
                         batch.commit()
-                                .addOnSuccessListener(aVoid -> listener.onMissionStarted(true, "Misija uspešno započeta!"))
+                                .addOnSuccessListener(aVoid -> listener.onMissionStarted(true, "Misija uspešno započeta! Traje 2 minuta."))
                                 .addOnFailureListener(e -> listener.onMissionStarted(false, "Greška pri kreiranju misije: " + e.getMessage()));
                     }).addOnFailureListener(e -> {
                         Log.e("ZadatakRepository", "Greška pri učitavanju profila članova", e);

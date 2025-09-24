@@ -65,6 +65,7 @@ public class UserProfileFragment extends Fragment {
     private boolean isClanLeader = false;
     private FriendsAdapter friendsAdapter;
     private List<Friend> friendsList = new ArrayList<>();
+    private LinearLayout layoutBedzeva;
 
     public UserProfileFragment() {
         // Required empty constructor
@@ -82,7 +83,7 @@ public class UserProfileFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
+        layoutBedzeva = view.findViewById(R.id.layout_bedzeva);
         btnSpecijalnaMisija = view.findViewById(R.id.btn_specijalna_misija);
         userAvatar = view.findViewById(R.id.userAvatar);
         usernameText = view.findViewById(R.id.usernameText);
@@ -195,6 +196,7 @@ public class UserProfileFragment extends Fragment {
                         experienceText.setText("Experience points: " + profileToShow.getExperiencePoints());
                         coinsText.setText("Collected coins: " + profileToShow.getCollectedCoins());
                         badgesText.setText("Badges: " + profileToShow.getNumberOfBadges());
+                        prikaziBedzeve(profileToShow.getNumberOfBadges());
                         if (profileToShow.getClanId() != null && !profileToShow.getClanId().isEmpty()) {
                             btnSpecijalnaMisija.setVisibility(View.VISIBLE);
                         } else {
@@ -266,7 +268,33 @@ public class UserProfileFragment extends Fragment {
 
 
     }
+    private void prikaziBedzeve(int brojBedzeva) {
+        // Prvo obriši sve prethodne bedževe da se ne bi duplirali
+        layoutBedzeva.removeAllViews();
 
+        if (brojBedzeva > 0) {
+            layoutBedzeva.setVisibility(View.VISIBLE);
+            // Ponavljaj onoliko puta koliko ima bedževa
+            for (int i = 0; i < brojBedzeva; i++) {
+                ImageView badgeImageView = new ImageView(getContext());
+                // Postavi sliku bedža (koristimo uvek istu sliku)
+                badgeImageView.setImageResource(R.drawable.badge_icon);
+
+                // Definiši veličinu i margine za svaku sličicu
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                        100, // širina u pikselima
+                        100  // visina u pikselima
+                );
+                params.setMargins(8, 0, 8, 0); // razmak između bedževa
+                badgeImageView.setLayoutParams(params);
+
+                // Dodaj sličicu u kontejner
+                layoutBedzeva.addView(badgeImageView);
+            }
+        } else {
+            layoutBedzeva.setVisibility(View.GONE);
+        }
+    }
     private void loadFriends() {
         db.collection("users").document(userUID).collection("friends")
                 .addSnapshotListener((value, error) -> {

@@ -2,16 +2,19 @@ package com.example.rpggame.activity;
 
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.rpggame.NapredakAdapter;
 import com.example.rpggame.R;
 import com.example.rpggame.ZadatakRepository;
 import com.example.rpggame.domain.SpecijalnaMisija;
-import com.example.rpggame.domain.UserProfile;
 
 public class SpecijalnaMisijaActivity extends AppCompatActivity {
 
@@ -20,6 +23,7 @@ public class SpecijalnaMisijaActivity extends AppCompatActivity {
     private RecyclerView clanoviMisijaRecyclerview;
     private NapredakAdapter napredakAdapter;
     private ZadatakRepository repository;
+    private SpecijalnaMisija trenutnaMisija;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +38,11 @@ public class SpecijalnaMisijaActivity extends AppCompatActivity {
         repository = new ZadatakRepository(getApplication());
 
         setupRecyclerView();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         ucitajStatusMisije();
     }
 
@@ -47,18 +56,26 @@ public class SpecijalnaMisijaActivity extends AppCompatActivity {
         repository.getUserProfile(userProfile -> {
             if (userProfile != null && userProfile.getClanId() != null && !userProfile.getClanId().isEmpty()) {
                 repository.getAktivnaMisijaZaSavez(userProfile.getClanId(), misija -> {
+                    this.trenutnaMisija = misija;
                     if (misija != null) {
-                        prikaziPodatkeMisije(misija);
+                        // AŽURIRANO: Proveravamo da li je misija istekla
+                        if (System.currentTimeMillis() > misija.getDatumZavrsetka().toDate().getTime()) {
+                            statusMisijeText.setText("Misija je istekla, obračunavaju se rezultati...");
+                            repository.zavrsiSpecijalnuMisiju(misija, message -> {
+                                Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+                                // Ponovo učitaj status, koji će sada biti "nema misije"
+                                ucitajStatusMisije();
+                            });
+                        } else {
+                            // Ako nije istekla, prikaži podatke
+                            prikaziPodatkeMisije(misija);
+                        }
                     } else {
-                        statusMisijeText.setText("Trenutno nema aktivnih misija za tvoj savez.");
-                        hpBosaMisijeBar.setVisibility(View.GONE);
-                        hpBosaMisijeLabel.setVisibility(View.GONE);
+                        prikaziPorukuNemaMisije();
                     }
                 });
             } else {
-                statusMisijeText.setText("Nisi član nijednog saveza.");
-                hpBosaMisijeBar.setVisibility(View.GONE);
-                hpBosaMisijeLabel.setVisibility(View.GONE);
+                prikaziPorukuNemaMisije();
             }
         });
     }
@@ -67,6 +84,8 @@ public class SpecijalnaMisijaActivity extends AppCompatActivity {
         statusMisijeText.setText("Misija je aktivna!");
         hpBosaMisijeBar.setVisibility(View.VISIBLE);
         hpBosaMisijeLabel.setVisibility(View.VISIBLE);
+        clanoviMisijaRecyclerview.setVisibility(View.VISIBLE);
+
         hpBosaMisijeBar.setMax(misija.getMaksHpBosa());
         hpBosaMisijeBar.setProgress(misija.getHpBosa());
         hpBosaMisijeLabel.setText("HP Bosa: " + misija.getHpBosa() + " / " + misija.getMaksHpBosa());
@@ -74,5 +93,12 @@ public class SpecijalnaMisijaActivity extends AppCompatActivity {
         repository.getNapredakSvihClanova(misija.getId(), listaNapretka -> {
             napredakAdapter.setListaNapretka(listaNapretka);
         });
+    }
+
+    private void prikaziPorukuNemaMisije() {
+        statusMisijeText.setText("Trenutno nema aktivnih misija za tvoj savez.");
+        hpBosaMisijeBar.setVisibility(View.GONE);
+        hpBosaMisijeLabel.setVisibility(View.GONE);
+        clanoviMisijaRecyclerview.setVisibility(View.GONE);
     }
 }
