@@ -36,7 +36,7 @@ public class ItemFactory {
                 String type = doc.getString("name");
                 if ("Sword".equalsIgnoreCase(type)) {
                     return doc.toObject(Sword.class);
-                } else if ("BowAndArrow".equalsIgnoreCase(type) || "Bow".equalsIgnoreCase(type)) {
+                } else if ("bow_and_arrow".equalsIgnoreCase(type) ) {
                     return doc.toObject(BowAndArrow.class);
                 }
                 break;

@@ -1,5 +1,6 @@
 package com.example.rpggame;
 
+import com.example.rpggame.Enums.UserTitle;
 import com.example.rpggame.domain.UserProfile;
 import com.example.rpggame.domain.Zadatak;
 import com.google.firebase.Timestamp;
@@ -165,7 +166,12 @@ public class LevelUpHelper {
                     newPP += (int) Math.round(newPP * 0.75);
                 }
                 user.setPowerPoints(newPP);
-                // TODO: Implementirati promenu titule
+                switch (user.getLevel()){
+                    case 1: user.setTitle(UserTitle.INTERMEDIATE); break;
+                    case 2: user.setTitle(UserTitle.SENIOR); break;
+                    case 3: user.setTitle(UserTitle.EXPERT); break;
+                    default: user.setTitle(UserTitle.EXPERT); break;
+                }
             } else {
                 // Nema dovoljno XP za sledeći nivo, prekidamo proveru
                 break;
