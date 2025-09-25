@@ -224,7 +224,7 @@ public class ShopFragment extends Fragment {
                     permanentPotion5.setOnClickListener(v -> {
                         // Add potion to inventory (subcollection)
                         Map<String, Object> potion = new HashMap<>();
-                        potion.put("name", "Wine Potion");
+                        potion.put("name", "Yellow Potion");
                         potion.put("category", "potion");
                         potion.put("powerBoost", 5);
                         potion.put("durability", "infinite");
@@ -235,7 +235,7 @@ public class ShopFragment extends Fragment {
                     permanentPotion10.setOnClickListener(v -> {
                         // Add potion to inventory (subcollection)
                         Map<String, Object> potion = new HashMap<>();
-                        potion.put("name", "Yellow Potion");
+                        potion.put("name", "Wine Potion");
                         potion.put("category", "potion");
                         potion.put("powerBoost", 10);
                         potion.put("durability", "infinite");
